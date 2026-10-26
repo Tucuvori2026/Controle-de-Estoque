@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Inventário | Tucuvori</title>
+    <title>Tucuvori | Controle de Estoque</title>
     <style>
         :root {
             --navy: #111111;
@@ -754,6 +754,12 @@
         }
 
     
+        .subcategory-box { border:1px solid #29382d; border-radius:12px; padding:14px; margin-top:16px; background:#080b09; }
+        .subcategory-list { display:grid; gap:8px; margin-top:12px; }
+        .subcategory-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid #29382d; border-radius:9px; background:#111511; }
+        .subcategory-row strong { overflow-wrap:anywhere; }
+        .subcategory-row .actions { flex:0 0 auto; }
+        .field-help { display:block; color:var(--muted); font-size:12px; font-weight:400; margin-top:5px; }
         .inventory-subtabs { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px; }
         .inventory-subtab { flex:1 1 0; min-width:0; }
         .inventory-subtab.active { background:var(--green); color:#061109; border-color:var(--green); font-weight:700; }
@@ -813,7 +819,7 @@
             <div class="toolbar"><select id="stockCategoryFilter" aria-label="Filtrar por categoria"><option value="">Todas as categorias</option></select><select id="stockStatusFilter" aria-label="Filtrar por status"><option value="">Todos os status</option><option value="low">Estoque baixo</option><option value="zero">Estoque zerado</option><option value="ok">Estoque normal</option></select></div>
             <div class="toolbar">
                 <h2>Estoque Atual</h2>
-                <input id="search" placeholder="Buscar por Nome, SKU ou Categoria...">
+                <input id="search" placeholder="Buscar por nome, SKU, categoria ou subcategoria...">
             </div>
             <div id="stockTable" class="scroll"></div>
         </section>
@@ -825,8 +831,14 @@
                 <label>Nome do Item *<input name="name" required placeholder="..."></label>
                 <label>Categoria *
                     <select name="category" id="itemCategory" required>
-                        <option value="">Selecione ou adicione uma categoria</option>
+                        <option value="">Selecione uma categoria</option>
                     </select>
+                </label>
+                <label>Subcategoria
+                    <select name="subcategory" id="itemSubcategory">
+                        <option value="">Sem subcategoria</option>
+                    </select>
+                    <span class="field-help">Opcional. As opções dependem da categoria escolhida.</span>
                 </label>
                 <label>Unidade *<select name="unit"><option value="un">Unidade (Un)</option><option value="kg">Quilograma (Kg)</option><option value="m">Metro (M)</option><option value="L">Litro (L)</option><option value="cx">Caixa (Cx)</option><option value="pct">Pacote (Pct)</option><option value="rolo">Rolo</option></select></label>
                 <label>Quantidade Inicial<input name="qty" type="number" min="0" step="0.001" value="0" required></label>
@@ -897,6 +909,23 @@
             </form>
             <h3 style="margin-top:22px">Categorias cadastradas</h3>
             <div id="categoryList" style="margin:14px 0 22px"></div>
+            <div class="subcategory-box">
+                <h3 style="margin:0 0 12px">Cadastrar subcategoria</h3>
+                <p class="muted" style="font-size:13px">Exemplo: Categoria <b>Bebida</b> → subcategorias <b>Whiskey</b>, <b>Contini</b> e <b>Gin</b>.</p>
+                <form id="subcategoryForm">
+                    <label>Categoria principal *
+                        <select id="subcategoryParent" name="parent" required>
+                            <option value="">Selecione uma categoria</option>
+                        </select>
+                    </label>
+                    <label>Nome da subcategoria *
+                        <input name="subcategoryName" required maxlength="60" placeholder="Ex.: Whiskey">
+                    </label>
+                    <button class="primary full" type="submit">+ Adicionar subcategoria</button>
+                </form>
+                <h3 style="margin:20px 0 8px">Subcategorias cadastradas</h3>
+                <div id="subcategoryList" class="subcategory-list"></div>
+            </div>
         </section>
     </main>
 
@@ -932,13 +961,18 @@
             const normalized = {
                 items: asArray(result.items),
                 moves: asArray(result.moves),
-                categories: asArray(result.categories)
+                categories: asArray(result.categories).map(c => typeof c === 'string' ? c : String(c?.name || c?.category || '')).filter(Boolean),
+                subcategories: asArray(result.subcategories).map(s => ({
+                    category: String(s?.category || s?.parent || ''),
+                    name: String(s?.name || s?.subcategory || '')
+                })).filter(s => s.category && s.name)
             };
 
             normalized.items.forEach((item, idx) => {
                 if (!item.sku) item.sku = 'LEG-' + String(idx + 1).padStart(4, '0');
                 else item.sku = String(item.sku).toUpperCase();
                 if (!item.category) item.category = 'Sem categoria';
+                if (!item.subcategory) item.subcategory = '';
             });
 
             normalized.moves.forEach(move => {
@@ -1000,7 +1034,7 @@
             const q = ($('#search')?.value || '').toLowerCase();
             const catFilter = $('#stockCategoryFilter')?.value || '';
             const statusFilter = $('#stockStatusFilter')?.value || '';
-            const list = data.items.filter(i => [i.name, i.sku, i.category].some(v => String(v || '').toLowerCase().includes(q)))
+            const list = data.items.filter(i => [i.name, i.sku, i.category, i.subcategory].some(v => String(v || '').toLowerCase().includes(q)))
                 .filter(i => !catFilter || i.category === catFilter)
                 .filter(i => !statusFilter || (statusFilter === 'zero' ? Number(i.qty) === 0 : statusFilter === 'low' ? Number(i.qty) <= Number(i.min) : Number(i.qty) > Number(i.min)));
             
@@ -1013,7 +1047,7 @@
             if (filter) { const old = filter.value; filter.innerHTML = '<option value="">Todas as categorias</option>' + [...data.categories].sort().map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join(''); filter.value = old; }
             const inv = $('#inventoryItem'); if (inv) { const old = inv.value; inv.innerHTML = data.items.map(i => `<option value="${i.id}">${esc(i.sku)} — ${esc(i.name)} (${fmt(i.qty)} ${esc(i.unit)})</option>`).join(''); if (data.items.some(i => String(i.id) === old)) inv.value = old; }
             const totalQty = data.items.reduce((sum,i) => sum + Number(i.qty || 0), 0);
-            $('#reportsContent').innerHTML = `<div class="stats"><div class="stat"><span>Produtos cadastrados</span><strong>${data.items.length}</strong></div><div class="stat"><span>Categorias</span><strong>${data.categories.length}</strong></div><div class="stat"><span>Quantidade total (soma das unidades)</span><strong>${fmt(totalQty)}</strong></div><div class="stat"><span>Entradas registradas</span><strong>${data.moves.filter(m => m.type === 'entrada').length}</strong></div><div class="stat"><span>Saídas registradas</span><strong>${data.moves.filter(m => m.type === 'saida').length}</strong></div><div class="stat"><span>Produtos zerados</span><strong>${zeroCount}</strong></div></div>`;
+            $('#reportsContent').innerHTML = `<div class="stats"><div class="stat"><span>Produtos cadastrados</span><strong>${data.items.length}</strong></div><div class="stat"><span>Categorias</span><strong>${data.categories.length}</strong></div><div class="stat"><span>Subcategorias</span><strong>${data.subcategories.length}</strong></div><div class="stat"><span>Quantidade total (soma das unidades)</span><strong>${fmt(totalQty)}</strong></div><div class="stat"><span>Entradas registradas</span><strong>${data.moves.filter(m => m.type === 'entrada').length}</strong></div><div class="stat"><span>Saídas registradas</span><strong>${data.moves.filter(m => m.type === 'saida').length}</strong></div><div class="stat"><span>Produtos zerados</span><strong>${zeroCount}</strong></div></div>`;
 
             const categorySelect = $('#itemCategory');
             if (categorySelect) {
@@ -1022,13 +1056,35 @@
                 if (data.categories.includes(selectedCategory)) categorySelect.value = selectedCategory;
                 categorySelect.disabled = data.categories.length === 0;
             }
+            const parentSelect = $('#subcategoryParent');
+            if (parentSelect) {
+                const oldParent = parentSelect.value;
+                parentSelect.innerHTML = '<option value="">Selecione uma categoria</option>' + [...data.categories].sort((a,b) => a.localeCompare(b, 'pt-BR')).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+                if (data.categories.includes(oldParent)) parentSelect.value = oldParent;
+                parentSelect.disabled = data.categories.length === 0;
+            }
+            const subcategorySelect = $('#itemSubcategory');
+            if (subcategorySelect) {
+                const selectedSubcategory = subcategorySelect.value;
+                const selectedParent = categorySelect?.value || '';
+                const choices = data.subcategories.filter(s => s.category === selectedParent).map(s => s.name).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+                subcategorySelect.innerHTML = '<option value="">Sem subcategoria</option>' + choices.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+                if (choices.includes(selectedSubcategory)) subcategorySelect.value = selectedSubcategory;
+                subcategorySelect.disabled = !selectedParent || choices.length === 0;
+            }
             const categoryList = $('#categoryList');
             if (categoryList) categoryList.innerHTML = data.categories.length
                 ? '<div class="scroll"><table><thead><tr><th>Categoria</th><th>Ação</th></tr></thead><tbody>' + [...data.categories].sort((a,b) => a.localeCompare(b, 'pt-BR')).map(c => `<tr><td data-label="Categoria">${esc(c)}</td><td data-label="Ação"><button class="secondary rename-category" type="button" data-category="${esc(c)}">Renomear</button> <button class="secondary remove-category" type="button" data-category="${esc(c)}">Excluir</button></td></tr>`).join('') + '</tbody></table></div>'
                 : '<div class="empty">Nenhuma categoria cadastrada ainda.</div>';
 
+            const subcategoryList = $('#subcategoryList');
+            if (subcategoryList) {
+                const subs = [...data.subcategories].sort((a,b) => a.category.localeCompare(b.category, 'pt-BR') || a.name.localeCompare(b.name, 'pt-BR'));
+                subcategoryList.innerHTML = subs.length ? subs.map(s => `<div class="subcategory-row"><div><strong>${esc(s.name)}</strong><div class="muted" style="font-size:12px">Categoria: ${esc(s.category)}</div></div><div class="actions"><button type="button" class="secondary rename-subcategory" data-category="${esc(s.category)}" data-subcategory="${esc(s.name)}">Renomear</button><button type="button" class="secondary remove-subcategory" data-category="${esc(s.category)}" data-subcategory="${esc(s.name)}">Excluir</button></div></div>`).join('') : '<div class="empty">Nenhuma subcategoria cadastrada ainda.</div>';
+            }
+
             $('#stockTable').innerHTML = list.length ? 
-                `<table><thead><tr><th>Item</th><th>SKU</th><th>Categoria</th><th>Quantidade Atual</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(i => `<tr><td data-label="Item">${esc(i.name)}</td><td data-label="SKU">${esc((i.sku || "").toUpperCase())}</td><td data-label="Categoria">${esc(i.category || "Sem categoria")}</td><td data-label="Quantidade Atual"><b>${fmt(i.qty)} ${esc(i.unit)}</b></td><td data-label="Status"><span class="tag ${i.qty <= i.min ? 'low' : ''}">${i.qty <= i.min ? 'Repor' : 'Normal'}</span></td><td data-label="Ações"><button class="secondary edit-item" data-id="${esc(i.id)}" type="button">Editar</button></td></tr>`).join('')}</tbody></table>` : 
+                `<table><thead><tr><th>Item</th><th>SKU</th><th>Categoria</th><th>Subcategoria</th><th>Quantidade Atual</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(i => `<tr><td data-label="Item">${esc(i.name)}</td><td data-label="SKU">${esc((i.sku || "").toUpperCase())}</td><td data-label="Categoria">${esc(i.category || "Sem categoria")}</td><td data-label="Subcategoria">${esc(i.subcategory || "—")}</td><td data-label="Quantidade Atual"><b>${fmt(i.qty)} ${esc(i.unit)}</b></td><td data-label="Status"><span class="tag ${i.qty <= i.min ? 'low' : ''}">${i.qty <= i.min ? 'Repor' : 'Normal'}</span></td><td data-label="Ações"><button class="secondary edit-item" data-id="${esc(i.id)}" type="button">Editar</button></td></tr>`).join('')}</tbody></table>` : 
                 '<div class="empty">Nenhum item cadastrado. Use “Cadastrar item” para começar.</div>';
 
             if (data.items.length) {
@@ -1053,7 +1109,7 @@
             }
 
             $('#historyTable').innerHTML = data.moves.length ? 
-                `<table><thead><tr><th>Data</th><th>SKU</th><th>Item</th><th>Categoria</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Quem retirou</th><th>Observação</th></tr></thead><tbody>${[...data.moves].reverse().slice(0, 500).map(m => `<tr><td data-label="Data">${esc(m.date)}</td><td data-label="SKU">${esc((m.sku || "").toUpperCase())}</td><td data-label="Item">${esc(m.name)}</td><td data-label="Categoria">${esc(m.category || "Sem categoria")}</td><td data-label="Tipo"><span class="tag ${m.type === 'saida' ? 'low' : ''}">${m.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td><td data-label="Quantidade">${fmt(m.qty)} ${esc(m.unit)}</td><td data-label="Motivo">${esc(m.reason)}</td><td data-label="Quem retirou">${esc(m.withdrawnBy || "—")}</td><td data-label="Observação">${esc(m.notes || '—')}</td></tr>`).join('')}</tbody></table>` : 
+                `<table><thead><tr><th>Data</th><th>SKU</th><th>Item</th><th>Categoria</th><th>Subcategoria</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Quem retirou</th><th>Observação</th></tr></thead><tbody>${[...data.moves].reverse().slice(0, 500).map(m => `<tr><td data-label="Data">${esc(m.date)}</td><td data-label="SKU">${esc((m.sku || "").toUpperCase())}</td><td data-label="Item">${esc(m.name)}</td><td data-label="Categoria">${esc(m.category || "Sem categoria")}</td><td data-label="Subcategoria">${esc(m.subcategory || "—")}</td><td data-label="Tipo"><span class="tag ${m.type === 'saida' ? 'low' : ''}">${m.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td><td data-label="Quantidade">${fmt(m.qty)} ${esc(m.unit)}</td><td data-label="Motivo">${esc(m.reason)}</td><td data-label="Quem retirou">${esc(m.withdrawnBy || "—")}</td><td data-label="Observação">${esc(m.notes || '—')}</td></tr>`).join('')}</tbody></table>` : 
                 '<div class="empty">Ainda não há movimentações.</div>';
         }
 
@@ -1088,15 +1144,58 @@
 
         $('#categoryList').addEventListener('click', e => {
             const renameButton = e.target.closest('.rename-category');
-            if (renameButton) { const oldName = renameButton.dataset.category; const newName = prompt('Novo nome da categoria:', oldName); if (newName === null) return; const clean = newName.trim().replace(/\s+/g, ' '); if (!clean) return note('Informe um nome válido.', true); if (data.categories.some(c => c.toLowerCase() === clean.toLowerCase() && c !== oldName)) return note('Essa categoria já existe.', true); data.categories = data.categories.map(c => c === oldName ? clean : c); data.items.forEach(i => { if (i.category === oldName) i.category = clean; }); save(); return note('Categoria renomeada.'); }
+            if (renameButton) { const oldName = renameButton.dataset.category; const newName = prompt('Novo nome da categoria:', oldName); if (newName === null) return; const clean = newName.trim().replace(/\s+/g, ' '); if (!clean) return note('Informe um nome válido.', true); if (data.categories.some(c => c.toLowerCase() === clean.toLowerCase() && c !== oldName)) return note('Essa categoria já existe.', true); data.categories = data.categories.map(c => c === oldName ? clean : c); data.subcategories.forEach(s => { if (s.category === oldName) s.category = clean; }); data.items.forEach(i => { if (i.category === oldName) i.category = clean; }); data.moves.forEach(m => { if (m.category === oldName) m.category = clean; }); save(); return note('Categoria renomeada.'); }
             const button = e.target.closest('.remove-category');
             if (!button) return;
             const category = button.dataset.category;
             if (data.items.some(item => item.category === category)) return note('Não é possível excluir: existem produtos usando essa categoria. Altere os produtos primeiro.', true);
+            if (data.subcategories.some(s => s.category === category)) return note('Exclua primeiro as subcategorias dessa categoria.', true);
             if (!window.confirm(`Excluir a categoria "${category}"? O histórico existente será mantido.`)) return;
             data.categories = data.categories.filter(c => c !== category);
             save();
             note('Categoria excluída.');
+        });
+
+
+        $('#subcategoryForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const category = String(f.get('parent') || '').trim();
+            const name = String(f.get('subcategoryName') || '').trim().replace(/\s+/g, ' ');
+            if (!category || !data.categories.includes(category)) return note('Selecione uma categoria principal cadastrada.', true);
+            if (!name) return note('Informe o nome da subcategoria.', true);
+            if (data.subcategories.some(s => s.category.toLocaleLowerCase('pt-BR') === category.toLocaleLowerCase('pt-BR') && s.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) return note('Essa subcategoria já existe nessa categoria.', true);
+            data.subcategories.push({ category, name });
+            save();
+            e.target.elements.subcategoryName.value = '';
+            note('Subcategoria adicionada com sucesso.');
+        });
+
+        $('#subcategoryList').addEventListener('click', e => {
+            const rename = e.target.closest('.rename-subcategory');
+            if (rename) {
+                const category = rename.dataset.category;
+                const oldName = rename.dataset.subcategory;
+                const next = prompt('Novo nome da subcategoria:', oldName);
+                if (next === null) return;
+                const name = next.trim().replace(/\s+/g, ' ');
+                if (!name) return note('Informe um nome válido.', true);
+                if (data.subcategories.some(s => s.category === category && s.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR') && s.name !== oldName)) return note('Essa subcategoria já existe nessa categoria.', true);
+                data.subcategories.forEach(s => { if (s.category === category && s.name === oldName) s.name = name; });
+                data.items.forEach(i => { if (i.category === category && i.subcategory === oldName) i.subcategory = name; });
+                save();
+                note('Subcategoria renomeada.');
+                return;
+            }
+            const remove = e.target.closest('.remove-subcategory');
+            if (!remove) return;
+            const category = remove.dataset.category;
+            const name = remove.dataset.subcategory;
+            if (data.items.some(i => i.category === category && i.subcategory === name)) return note('Não é possível excluir: existem produtos usando essa subcategoria. Altere os produtos primeiro.', true);
+            if (!confirm(`Excluir a subcategoria "${name}" da categoria "${category}"?`)) return;
+            data.subcategories = data.subcategories.filter(s => !(s.category === category && s.name === name));
+            save();
+            note('Subcategoria excluída.');
         });
 
         $('#itemForm').addEventListener('submit', e => {
@@ -1105,15 +1204,17 @@
                   sku = String(f.get('sku')).trim().toUpperCase(),
                   name = String(f.get('name')).trim(),
                   category = String(f.get('category')).trim(),
+                  subcategory = String(f.get('subcategory') || '').trim(),
                   unit = f.get('unit'),
                   qty = Number(f.get('qty')),
                   min = Number(f.get('min'));
 
             if (!sku || !name || !category || !data.categories.includes(category) || qty < 0 || min < 0) return note('Confira os dados e selecione uma categoria cadastrada.', true);
+            if (subcategory && !data.subcategories.some(s => s.category === category && s.name === subcategory)) return note('Selecione uma subcategoria válida para a categoria escolhida.', true);
             if (data.items.some(i => String(i.sku || '').toUpperCase() === sku)) return note('Já existe um item com esse SKU.', true);
             if (data.items.some(i => i.name.toLowerCase() === name.toLowerCase())) return note('Já existe um item com esse nome.', true);
 
-            data.items.push({ id: Date.now() + Math.random(), sku, name, category, unit, qty, min });
+            data.items.push({ id: Date.now() + Math.random(), sku, name, category, subcategory, unit, qty, min });
             save();
             e.target.reset();
             note('Item cadastrado com sucesso.');
@@ -1141,6 +1242,7 @@
                 sku: (item.sku || '').toUpperCase(),
                 name: item.name,
                 category: item.category || 'Sem categoria',
+                subcategory: item.subcategory || '',
                 unit: item.unit,
                 type,
                 qty,
@@ -1154,6 +1256,12 @@
             document.querySelector('[data-tab="stock"]').click();
         });
 
+        $('#itemCategory').addEventListener('change', () => {
+            const sub = $('#itemSubcategory');
+            const choices = data.subcategories.filter(s => s.category === $('#itemCategory').value).map(s => s.name).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+            sub.innerHTML = '<option value="">Sem subcategoria</option>' + choices.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+            sub.disabled = choices.length === 0;
+        });
         $('#search').addEventListener('input', render);
         $('#stockCategoryFilter').addEventListener('change', render);
         $('#stockStatusFilter').addEventListener('change', render);
@@ -1165,20 +1273,23 @@
             const qtyText = prompt('Quantidade atual:', item.qty); if (qtyText === null) return;
             const minText = prompt('Estoque mínimo:', item.min); if (minText === null) return;
             const category = prompt('Categoria (digite exatamente uma categoria cadastrada):\n' + data.categories.join(', '), item.category); if (category === null) return;
+            const subChoices = data.subcategories.filter(s => s.category === category).map(s => s.name);
+            const subcategoryInput = prompt('Subcategoria (deixe vazio se não houver):\n' + subChoices.join(', '), item.subcategory || ''); if (subcategoryInput === null) return;
+            const subcategory = subcategoryInput.trim();
             const qty = Number(qtyText), min = Number(minText), cleanSku = sku.trim().toUpperCase();
-            if (!name.trim() || !cleanSku || !data.categories.includes(category) || !Number.isFinite(qty) || qty < 0 || !Number.isFinite(min) || min < 0) return note('Dados inválidos. Confira nome, SKU, categoria e quantidades.', true);
+            if (!name.trim() || !cleanSku || !data.categories.includes(category) || (subcategory && !subChoices.includes(subcategory)) || !Number.isFinite(qty) || qty < 0 || !Number.isFinite(min) || min < 0) return note('Dados inválidos. Confira nome, SKU, categoria, subcategoria e quantidades.', true);
             if (data.items.some(x => x.id !== item.id && String(x.sku).toUpperCase() === cleanSku)) return note('Já existe outro produto com esse SKU.', true);
-            const before = Number(item.qty); Object.assign(item, {name:name.trim(), sku:cleanSku, qty, min, category});
-            if (before !== qty) data.moves.push({date:new Date().toLocaleString('pt-BR'), itemId:item.id, sku:item.sku, name:item.name, category:item.category, unit:item.unit, type:qty >= before ? 'entrada' : 'saida', qty:Math.abs(qty-before), reason:'Ajuste de estoque', withdrawnBy:'Edição de produto', notes:`Ajuste manual: ${fmt(before)} para ${fmt(qty)}`});
+            const before = Number(item.qty); Object.assign(item, {name:name.trim(), sku:cleanSku, qty, min, category, subcategory});
+            if (before !== qty) data.moves.push({date:new Date().toLocaleString('pt-BR'), itemId:item.id, sku:item.sku, name:item.name, category:item.category, subcategory:item.subcategory || '', unit:item.unit, type:qty >= before ? 'entrada' : 'saida', qty:Math.abs(qty-before), reason:'Ajuste de estoque', withdrawnBy:'Edição de produto', notes:`Ajuste manual: ${fmt(before)} para ${fmt(qty)}`});
             save(); note('Produto atualizado.');
         });
         $('#inventoryForm').addEventListener('submit', e => {
             e.preventDefault(); const f = new FormData(e.target); const item = data.items.find(i => String(i.id) === String(f.get('item'))); if (!item) return note('Cadastre um produto primeiro.', true);
             const counted = Number(f.get('qty')); if (!Number.isFinite(counted) || counted < 0) return note('Informe uma quantidade válida.', true);
             const before = Number(item.qty || 0), diff = counted - before;
-            if (diff !== 0) { data.moves.push({date:new Date().toLocaleString('pt-BR'), itemId:item.id, sku:item.sku, name:item.name, category:item.category, unit:item.unit, type:diff > 0 ? 'entrada' : 'saida', qty:Math.abs(diff), reason:'Ajuste de Estoque', withdrawnBy:String(f.get('responsible') || 'Inventário'), notes:`Inventário físico: saldo anterior ${fmt(before)}, contado ${fmt(counted)}. ${String(f.get('notes') || '').trim()}`}); item.qty = counted; save(); note('Inventário registrado e diferença ajustada.'); } else note('Inventário registrado: nenhuma diferença encontrada.'); e.target.reset(); render();
+            if (diff !== 0) { data.moves.push({date:new Date().toLocaleString('pt-BR'), itemId:item.id, sku:item.sku, name:item.name, category:item.category, subcategory:item.subcategory || '', unit:item.unit, type:diff > 0 ? 'entrada' : 'saida', qty:Math.abs(diff), reason:'Ajuste de Estoque', withdrawnBy:String(f.get('responsible') || 'Inventário'), notes:`Inventário físico: saldo anterior ${fmt(before)}, contado ${fmt(counted)}. ${String(f.get('notes') || '').trim()}`}); item.qty = counted; save(); note('Inventário registrado e diferença ajustada.'); } else note('Inventário registrado: nenhuma diferença encontrada.'); e.target.reset(); render();
         });
-        $('#exportStock').addEventListener('click', () => { const rows=[['SKU','Produto','Categoria','Unidade','Quantidade','Estoque mínimo','Status'], ...data.items.map(i=>[i.sku,i.name,i.category,i.unit,i.qty,i.min,Number(i.qty)<=Number(i.min)?'Repor':'Normal'])]; const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n'); const a=document.createElement('a'); const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.href=url; a.download='estoque-tucuvori.csv'; a.click(); URL.revokeObjectURL(url); });
+        $('#exportStock').addEventListener('click', () => { const rows=[['SKU','Produto','Categoria','Subcategoria','Unidade','Quantidade','Estoque mínimo','Status'], ...data.items.map(i=>[i.sku,i.name,i.category,i.subcategory || '',i.unit,i.qty,i.min,Number(i.qty)<=Number(i.min)?'Repor':'Normal'])]; const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n'); const a=document.createElement('a'); const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.href=url; a.download='estoque-tucuvori.csv'; a.click(); URL.revokeObjectURL(url); });
 
         function confirmResetPassword() {
             const p = window.prompt('Digite a senha para confirmar:');
@@ -1217,18 +1328,50 @@
             note('Quantidades zeradas. Cadastros e histórico mantidos.');
         });
 
-        $('#clearAll').addEventListener('click', () => {
+        $('#clearAll').addEventListener('click', async () => {
             if (!confirmResetPassword()) return;
-            if (!window.confirm('ATENÇÃO: todos os produtos e movimentações deste aparelho serão apagados. Esta ação não pode ser desfeita.')) return;
-            data = { items: [], moves: [], categories: [] };
-            save();
-            note('Todos os cadastros e o histórico deste aparelho foram apagados.');
+            if (!window.confirm('ATENÇÃO: todos os produtos, categorias, subcategorias e movimentações serão apagados do banco compartilhado. Esta ação não pode ser desfeita.')) return;
+
+            const button = $('#clearAll');
+            button.disabled = true;
+            const originalLabel = button.textContent;
+            button.textContent = 'Apagando…';
+
+            try {
+                // Nunca confirme a exclusão antes de o Firebase concluir a gravação.
+                // A fila espera gravações anteriores desta aba e, em seguida, grava
+                // o estado vazio como a última operação desta fila.
+                if (!firebaseLoaded) {
+                    throw new Error('O banco ainda não terminou de carregar. Atualize a página e tente novamente.');
+                }
+                const emptyData = { items: [], moves: [], categories: [], subcategories: [] };
+                saveQueue = saveQueue.catch(() => {}).then(() => stockRef.set(emptyData));
+                await saveQueue;
+
+                // Confirma lendo novamente o valor persistido no banco.
+                const verification = await stockRef.once('value');
+                const saved = normalizeData(verification.val() || EMPTY_DATA());
+                if (saved.items.length || saved.moves.length || saved.categories.length || saved.subcategories.length) {
+                    throw new Error('O Firebase ainda retornou dados após a exclusão. Verifique as permissões do banco e se outro dispositivo está gravando dados antigos.');
+                }
+
+                data = EMPTY_DATA();
+                data.subcategories = [];
+                render();
+                note('Banco de dados limpo e confirmado no Firebase. Se os dados voltarem, outro dispositivo ou outra aba pode estar gravando uma cópia antiga.');
+            } catch (error) {
+                console.error('Erro ao limpar o banco no Firebase:', error);
+                note('Não foi possível confirmar a limpeza: ' + (error?.message || 'erro de conexão/permissão.'), true);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalLabel;
+            }
         });
 
         $('#export').addEventListener('click', () => {
             const rows = [
-                ['Data', 'SKU', 'Item', 'Categoria', 'Tipo', 'Quantidade', 'Unidade', 'Motivo', 'Quem retirou', 'Observação'],
-                ...data.moves.map(m => [m.date, (m.sku || '').toUpperCase(), m.name, m.category, m.type, m.qty, m.unit, m.reason, m.withdrawnBy, m.notes])
+                ['Data', 'SKU', 'Item', 'Categoria', 'Subcategoria', 'Tipo', 'Quantidade', 'Unidade', 'Motivo', 'Quem retirou', 'Observação'],
+                ...data.moves.map(m => [m.date, (m.sku || '').toUpperCase(), m.name, m.category, m.subcategory || '', m.type, m.qty, m.unit, m.reason, m.withdrawnBy, m.notes])
             ];
             const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n');
             const a = document.createElement('a'),
@@ -1288,10 +1431,10 @@
             const totalQty = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
             const generatedAt = new Date().toLocaleString('pt-BR');
             const content = `
-                <section><h2>Resumo geral</h2><div class="summary"><div><b>Produtos cadastrados</b><span>${totalItems}</span></div><div><b>Quantidade total em estoque</b><span>${escapePrint(fmt(totalQty))}</span></div><div><b>Categorias cadastradas</b><span>${categories.length}</span></div><div><b>Movimentações registradas</b><span>${moves.length}</span></div><div><b>Registros de inventário</b><span>${invMoves.length}</span></div></div></section>
-                <section><h2>Estoque atual</h2>${printableTable(['SKU','Produto','Categoria','Quantidade','Unidade','Status'], items.map(i=>[i.sku,i.name,i.category,fmt(i.qty),i.unit,i.status || ((Number(i.qty)||0)<=0?'Zerado':'Normal')]))}</section>
-                <section><h2>Categorias</h2>${printableTable(['Categoria'], categories.map(c=>[typeof c === 'string' ? c : (c.name || c.category || '—')]))}</section>
-                <section><h2>Histórico de movimentações</h2>${printableTable(['Data','SKU','Produto','Categoria','Tipo','Quantidade','Unidade','Motivo','Responsável','Observação'], moves.slice().reverse().map(m=>[m.date,m.sku,m.name,m.category,m.type,fmt(m.qty),m.unit,m.reason,m.withdrawnBy,m.notes]))}</section>
+                <section><h2>Resumo geral</h2><div class="summary"><div><b>Produtos cadastrados</b><span>${totalItems}</span></div><div><b>Quantidade total em estoque</b><span>${escapePrint(fmt(totalQty))}</span></div><div><b>Categorias cadastradas</b><span>${categories.length}</span></div><div><b>Subcategorias cadastradas</b><span>${(data.subcategories || []).length}</span></div><div><b>Movimentações registradas</b><span>${moves.length}</span></div><div><b>Registros de inventário</b><span>${invMoves.length}</span></div></div></section>
+                <section><h2>Estoque atual</h2>${printableTable(['SKU','Produto','Categoria','Subcategoria','Quantidade','Unidade','Status'], items.map(i=>[i.sku,i.name,i.category,i.subcategory || '',fmt(i.qty),i.unit,i.status || ((Number(i.qty)||0)<=0?'Zerado':'Normal')]))}</section>
+                <section><h2>Categorias</h2>${printableTable(['Categoria'], categories.map(c=>[typeof c === 'string' ? c : (c.name || c.category || '—')]))}<h3>Subcategorias</h3>${printableTable(['Categoria','Subcategoria'], (data.subcategories || []).map(s=>[s.category,s.name]))}</section>
+                <section><h2>Histórico de movimentações</h2>${printableTable(['Data','SKU','Produto','Categoria','Subcategoria','Tipo','Quantidade','Unidade','Motivo','Responsável','Observação'], moves.slice().reverse().map(m=>[m.date,m.sku,m.name,m.category,m.subcategory || '',m.type,fmt(m.qty),m.unit,m.reason,m.withdrawnBy,m.notes]))}</section>
                 <section><h2>Histórico de inventário</h2>${printableTable(['Data','Produto','SKU','Tipo','Quantidade ajustada','Responsável','Observação'], invMoves.slice().reverse().map(m=>[m.date,m.name,m.sku,m.type,`${fmt(m.qty)} ${m.unit||''}`,m.withdrawnBy,m.notes]))}</section>`;
             const w = window.open('', '_blank');
             if (!w) { note('Permita pop-ups para gerar o PDF.', true); return; }
