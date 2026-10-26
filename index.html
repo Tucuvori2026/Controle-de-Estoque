@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventário | Tucuvori</title>
+    <style>
+        :root {
+            --navy: #111111;
+            --blue: #25c46a;
+            --bg: #171717;
+            --line: #383838;
+            --text: #f5f5f5;
+            --muted: #b8b8b8;
+            --red: #ff6b5f;
+            --green: #35b779;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 15px "Liberation Serif", Georgia, "Times New Roman", serif;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+            min-width: 320px;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        header {
+            background: #090909;
+            border-bottom: 4px solid #25c46a;
+            color: #fff;
+            padding: 20px max(16px, calc((100% - 1050px) / 2));
+        }
+
+        header h1 {
+            font-size: 22px;
+            margin: 0;
+            letter-spacing: .2px;
+        }
+
+        header p {
+            margin: 4px 0 0;
+            color: #d1d1d1;
+        }
+
+        main {
+            max-width: 1050px;
+            margin: 22px auto;
+            padding: 0 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .tabs button {
+            border: 1px solid #414141;
+            border-radius: 9px;
+            padding: 11px 16px;
+            background: #292929;
+            color: #f3f3f3;
+            font-weight: 700;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .tabs button.active {
+            background: var(--blue);
+            color: #111;
+            border-color: var(--blue);
+        }
+
+        .panel {
+            background: #222;
+            border: 1px solid #3b3b3b;
+            border-radius: 13px;
+            padding: 18px;
+            margin-bottom: 16px;
+            color: #f5f5f5;
+        }
+
+        .panel h2 {
+            font-size: 18px;
+            margin: 0 0 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            background: #222;
+            border: 1px solid #3b3b3b;
+            border-radius: 12px;
+            padding: 15px;
+            color: #f5f5f5;
+        }
+
+        .stat span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .stat strong {
+            font-size: 26px;
+            display: block;
+            margin-top: 4px;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        input, select {
+            width: 100%;
+            margin-top: 5px;
+            padding: 11px;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            font: inherit;
+            background: #171717;
+            color: var(--text);
+            color-scheme: dark;
+            min-height: 46px;
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        button, input, select {
+            touch-action: manipulation;
+        }
+
+        button.primary {
+            background: var(--blue);
+            color: #111;
+            border: 0;
+            border-radius: 8px;
+            padding: 11px 15px;
+            font-weight: 700;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        button.primary:hover {
+            background: #48e087;
+        }
+
+        button.secondary {
+            background: #292929;
+            color: var(--text);
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 9px 12px;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        form .full {
+            grid-column: 1 / -1;
+        }
+
+        form button {
+            justify-self: start;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .toolbar input {
+            max-width: 300px;
+            margin: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 11px 9px;
+            border-bottom: 1px solid #3b3b3b;
+            font-size: 13px;
+        }
+
+        th {
+            background: #2c2c2c;
+            color: #f4f4f4;
+        }
+
+        .scroll {
+            overflow: auto;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #153d2b;
+            color: #8ff0ba;
+        }
+
+        .tag.low {
+            background: #4a211e;
+            color: #ff9b91;
+        }
+
+        .notice {
+            padding: 11px;
+            border-radius: 8px;
+            background: #153d2b;
+            color: #8ff0ba;
+            margin-bottom: 12px;
+        }
+
+        .notice.err {
+            background: #4a211e;
+            color: #ffb1aa;
+        }
+
+        .muted, .empty, .foot {
+            color: var(--muted);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .foot {
+            font-size: 12px;
+            padding: 5px 0 24px;
+        }
+
+        ::selection {
+            background: var(--blue);
+            color: #111;
+        }
+
+        .toolbar select { max-width: 260px; }
+        .hidden { display: none !important; }
+        @media (max-width: 600px) {
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            .stats .stat:last-child {
+                grid-column: 1 / -1;
+            }
+            form {
+                grid-template-columns: 1fr;
+            }
+            .panel {
+                padding: 14px;
+            }
+            header {
+                padding: 17px;
+            }
+            main {
+                padding: 0 10px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            header {
+                padding: 16px 15px;
+            }
+            header h1 {
+                font-size: 19px;
+                line-height: 1.25;
+            }
+            header p {
+                font-size: 13px;
+                line-height: 1.4;
+            }
+            main {
+                width: 100%;
+                margin: 12px auto 18px;
+                padding: 0 10px;
+            }
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+            .stat {
+                padding: 12px;
+                border-radius: 11px;
+                min-width: 0;
+            }
+            .stat span {
+                font-size: 12px;
+                line-height: 1.35;
+            }
+            .stat strong {
+                font-size: 23px;
+                overflow-wrap: anywhere;
+            }
+            .stats .stat:last-child {
+                grid-column: 1 / -1;
+            }
+            .tabs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 7px;
+                margin: 0 0 12px;
+            }
+            .tabs button {
+                min-width: 0;
+                min-height: 48px;
+                padding: 10px 8px;
+                font-size: 13px;
+                line-height: 1.2;
+                border-radius: 10px;
+            }
+            .tabs button:last-child {
+                grid-column: auto;
+            }
+            .panel {
+                padding: 13px 11px;
+                margin-bottom: 12px;
+                border-radius: 12px;
+                min-width: 0;
+                background: #222;
+            }
+            .panel h2 {
+                font-size: 17px;
+                line-height: 1.3;
+                margin-bottom: 12px;
+            }
+            .toolbar {
+                display: flex;
+                align-items: stretch;
+                flex-direction: column;
+                gap: 9px;
+            }
+            .toolbar h2 {
+                margin-bottom: 0;
+            }
+            .toolbar input {
+                max-width: none;
+                width: 100%;
+                min-height: 48px;
+            }
+            .toolbar button {
+                width: 100%;
+                min-height: 46px;
+            }
+            form {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 12px;
+            }
+            form .full {
+                grid-column: auto;
+            }
+            label {
+                display: block;
+                font-size: 13px;
+                line-height: 1.35;
+            }
+            input, select {
+                padding: 12px;
+                font-size: 16px;
+                border-radius: 10px;
+                margin-top: 6px;
+            }
+            button.primary, button.secondary {
+                min-height: 48px;
+                border-radius: 10px;
+                padding: 12px 14px;
+                font-size: 15px;
+            }
+            form button {
+                width: 100%;
+                justify-self: stretch;
+            }
+            .scroll {
+                overflow: visible;
+                width: 100%;
+            }
+            .scroll table, .scroll tbody, .scroll tr, .scroll td {
+                display: block;
+                width: 100%;
+            }
+            .scroll table {
+                white-space: normal;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+            .scroll thead {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
+            .scroll tbody {
+                display: grid;
+                gap: 10px;
+            }
+            .scroll tr {
+                background: #222;
+                border: 1px solid #3b3b3b;
+                border-radius: 11px;
+                padding: 5px 11px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+            }
+            .scroll td {
+                display: grid;
+                grid-template-columns: minmax(90px, 36%) minmax(0, 1fr);
+                gap: 9px;
+                align-items: start;
+                padding: 9px 0;
+                border-bottom: 1px solid #3b3b3b;
+                font-size: 13px;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+            .scroll td:last-child {
+                border-bottom: 0;
+            }
+            .scroll td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: var(--muted);
+                font-size: 12px;
+            }
+            .scroll td b {
+                font-size: 14px;
+            }
+            .tag {
+                white-space: nowrap;
+                justify-self: start;
+            }
+            .notice {
+                position: sticky;
+                top: 6px;
+                z-index: 5;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+                font-size: 14px;
+            }
+            .foot {
+                padding: 8px 2px 18px;
+                line-height: 1.5;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .tabs button {
+                font-size: 12px;
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+            .scroll td {
+                grid-template-columns: minmax(76px, 34%) minmax(0, 1fr);
+                gap: 6px;
+            }
+        }
+
+        /* Refinamento visual profissional Tucuvori */
+        :root {
+            --navy: #090d0a;
+            --blue: #25c46a;
+            --bg: #0c100d;
+            --line: #29352d;
+            --text: #eef5ef;
+            --muted: #9eafa3;
+            --red: #ff7777;
+            --green: #35d477;
+            --surface: #141b16;
+            --surface-raised: #19221b;
+        }
+        html { color-scheme: dark; scroll-behavior: smooth; }
+        body {
+            background: radial-gradient(ellipse at top, #17251b 0%, var(--bg) 48%);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.5;
+        }
+        header {
+            background: rgba(8, 13, 9, .96);
+            border-bottom: 1px solid #267b46;
+            box-shadow: 0 8px 28px rgba(0,0,0,.22);
+            padding-top: 24px; padding-bottom: 24px;
+        }
+        header h1 { font-size: clamp(21px, 3vw, 28px); font-weight: 800; letter-spacing: -.5px; }
+        header h1::before { content: ""; display: inline-block; width: 9px; height: 25px; margin-right: 11px; vertical-align: -4px; border-radius: 4px; background: var(--green); }
+        header p { color: #a8b8ac; font-size: 13px; margin-top: 7px; }
+        main { max-width: 1200px; margin: 26px auto; }
+        .tabs { gap: 8px; padding: 7px; margin-bottom: 18px; border: 1px solid #26362b; border-radius: 14px; background: rgba(15,22,17,.9); }
+        .tabs button {
+            border: 1px solid transparent; border-radius: 9px; padding: 11px 15px;
+            background: transparent; color: #bdcabe; font: inherit; font-size: 13px; font-weight: 650;
+            transition: background .18s ease, color .18s ease, border-color .18s ease;
+        }
+        .tabs button:hover { background: #1d2b20; color: #fff; border-color: #304936; }
+        .tabs button.active { background: var(--green); color: #07130b; border-color: var(--green); box-shadow: 0 4px 14px rgba(53,212,119,.14); }
+        .panel, .stat { background: linear-gradient(145deg, #171f19, #121813); border: 1px solid #29382d; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+        .panel { padding: 22px; margin-bottom: 18px; }
+        .panel h2 { font-size: 18px; font-weight: 750; letter-spacing: -.2px; }
+        .stats { gap: 14px; }
+        .stat { padding: 18px; position: relative; overflow: hidden; }
+        .stat::after { content: ""; position: absolute; width: 4px; top: 16px; bottom: 16px; left: 0; border-radius: 0 4px 4px 0; background: var(--green); opacity: .85; }
+        .stat span { color: #a8b8ac; font-size: 12px; font-weight: 600; }
+        .stat strong { font-size: clamp(24px, 3vw, 30px); font-weight: 800; letter-spacing: -.6px; }
+        input, select { background: #0d130f; border: 1px solid #344438; border-radius: 9px; color: var(--text); outline: none; transition: border-color .15s, box-shadow .15s; }
+        input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(53,212,119,.12); }
+        label { color: #d9e5dc; font-size: 12px; letter-spacing: .1px; }
+        button.primary { background: var(--green); color: #07130b; border-radius: 9px; font-weight: 750; transition: transform .15s, background .15s; }
+        button.primary:hover { background: #58e891; transform: translateY(-1px); }
+        button.secondary { background: #202b23; border-color: #3a4b3e; border-radius: 9px; color: #e5eee7; }
+        button.secondary:hover { background: #293a2d; }
+        th { background: #202c23; color: #eaf4ec; font-weight: 700; }
+        th, td { border-bottom-color: #29372d; }
+        .tag { background: #153b28; color: #8df0b2; }
+        .notice { border: 1px solid #287b48; background: #12331f; color: #a8f5c1; }
+        .notice.err { border-color: #733434; background: #351919; color: #ffc0c0; }
+        .empty { color: #9eafa3; }
+        ::selection { background: #35d477; color: #061109; }
+        @media (max-width: 700px) {
+            header { padding: 19px 15px; }
+            main { margin-top: 14px; }
+            .tabs { padding: 6px; gap: 6px; }
+            .tabs button { font-size: 12px; min-height: 44px; }
+            .panel { padding: 16px 13px; }
+            .stat { padding: 14px 12px; }
+        }
+        /* Fundo preto absoluto e responsividade reforçada */
+        :root { --bg: #000000; --surface: #0b0d0b; --surface-raised: #111511; }
+        html, body { width: 100%; max-width: 100%; min-height: 100%; overflow-x: hidden; background: #000 !important; }
+        body { background-image: none !important; }
+        header { background: #050605 !important; }
+        main { width: min(1200px, 100%); padding-left: clamp(10px, 2.5vw, 24px); padding-right: clamp(10px, 2.5vw, 24px); }
+        .panel, .stat { background: #0b0d0b !important; }
+        .tabs { display: flex; flex-wrap: wrap; min-width: 0; }
+        .tabs button { min-width: 0; overflow-wrap: anywhere; }
+        .toolbar { min-width: 0; }
+        .toolbar input { min-width: 0; }
+        form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        form > label { min-width: 0; }
+        input, select { max-width: 100%; min-width: 0; }
+        .scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .scroll table { min-width: 680px; }
+        img, svg, video, canvas { max-width: 100%; }
+        button { overflow-wrap: anywhere; }
+        @media (max-width: 760px) {
+            main { margin: 14px auto; }
+            .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+            .tabs button { width: 100%; padding: 10px 7px; font-size: 13px; }
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .stats .stat:last-child { grid-column: 1 / -1; }
+            form { grid-template-columns: minmax(0, 1fr); }
+            form .full { grid-column: 1; }
+            .panel { padding: 15px 12px !important; }
+            .toolbar { align-items: stretch; }
+            .toolbar input, .toolbar button { width: 100%; max-width: none; }
+            .scroll { overflow-x: auto; }
+            .scroll table { min-width: 640px; }
+        }
+        @media (max-width: 380px) {
+            header h1 { font-size: 18px; }
+            .tabs { grid-template-columns: minmax(0, 1fr); }
+            .stats { grid-template-columns: minmax(0, 1fr); }
+            .stats .stat:last-child { grid-column: auto; }
+            .panel h2 { font-size: 16px; }
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+    
+        /* Menu hambúrguer compacto no mobile; navegação completa no desktop */
+        .tabs { display: block; padding: 0; border: 0; background: transparent; margin-bottom: 16px; }
+        .menu-toggle { display: none; }
+        .tab-links { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tab-links button { min-height: 42px; }
+        @media (max-width: 760px) {
+            .tabs { position: relative; z-index: 20; }
+            .menu-toggle {
+                display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px;
+                padding: 12px 15px; border: 1px solid #263b2c; border-radius: 13px;
+                background: #0b0d0b; color: #f5f5f5; font: inherit; font-weight: 700;
+                box-shadow: 0 8px 22px rgba(0,0,0,.25); cursor: pointer;
+            }
+            .hamburger-icon { display: flex; flex-direction: column; justify-content: center; gap: 5px; width: 22px; flex: 0 0 22px; }
+            .hamburger-icon i { display: block; height: 2px; width: 22px; border-radius: 2px; background: #35d477; transition: transform .18s ease, opacity .18s ease; }
+            .menu-toggle[aria-expanded="true"] .hamburger-icon i:first-child { transform: translateY(7px) rotate(45deg); }
+            .menu-toggle[aria-expanded="true"] .hamburger-icon i:nth-child(2) { opacity: 0; }
+            .menu-toggle[aria-expanded="true"] .hamburger-icon i:last-child { transform: translateY(-7px) rotate(-45deg); }
+            .current-tab { margin-left: auto; color: #35d477; font-size: 13px; font-weight: 600; text-align: right; }
+            .tab-links { display: none; flex-direction: column; flex-wrap: nowrap; gap: 5px; margin-top: 8px; padding: 8px; border: 1px solid #263b2c; border-radius: 13px; background: #080a08; box-shadow: 0 16px 30px rgba(0,0,0,.45); }
+            .tabs.menu-open .tab-links { display: flex; }
+            .tab-links button { width: 100%; min-height: 44px; text-align: left; padding: 11px 13px; border-radius: 9px; background: #101310; border: 1px solid #222c24; color: #e8eee9; }
+            .tab-links button.active { background: #35d477; border-color: #35d477; color: #07130b; }
+        }
+
+        /* Ajustes finais de responsividade para celulares, tablets e desktop */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { width: 100%; max-width: 100%; overflow-x: clip; }
+        body { width: 100%; min-width: 0; overflow-x: clip; }
+        header { width: 100%; padding-left: max(12px, calc((100% - 1200px) / 2)); padding-right: max(12px, calc((100% - 1200px) / 2)); }
+        main { width: 100%; min-width: 0; }
+        main > *, .panel, .stat, form, form > label, .toolbar, .scroll, #notice { min-width: 0; }
+        .panel { overflow-wrap: anywhere; }
+        .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        form > label { display: block; }
+        input, select, textarea, button { max-width: 100%; }
+        .toolbar { width: 100%; }
+        .toolbar select, .toolbar input { min-width: 0; }
+        .scroll { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+        .scroll table { min-width: 640px; }
+        .actions { flex-wrap: wrap; }
+        img, video, canvas, svg { max-width: 100%; }
+        button, input, select { overflow-wrap: anywhere; }
+        @media (max-width: 760px) {
+            header { padding: 16px 14px; }
+            header h1 { font-size: clamp(17px, 4.4vw, 21px); line-height: 1.25; overflow-wrap: anywhere; }
+            header p { font-size: 13px; line-height: 1.45; }
+            main { margin: 12px auto 20px; padding-left: 10px; padding-right: 10px; }
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            .stats .stat:last-child { grid-column: 1 / -1; }
+            .stat { padding: 12px 10px; }
+            .stat strong { font-size: clamp(19px, 5vw, 25px); overflow-wrap: anywhere; }
+            form { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+            form .full { grid-column: 1; width: 100%; }
+            form button { justify-self: stretch; min-height: 44px; }
+            .panel { padding: 14px 11px !important; border-radius: 12px; }
+            .panel h2 { line-height: 1.3; overflow-wrap: anywhere; }
+            .toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 9px; }
+            .toolbar > * { width: 100%; max-width: none !important; }
+            .toolbar h2 { margin-bottom: 2px; }
+            .menu-toggle { display: flex; }
+            .tab-links { width: 100%; }
+            .scroll table { min-width: 620px; }
+            .actions button { flex: 1 1 auto; }
+        }
+        @media (max-width: 420px) {
+            main { padding-left: 8px; padding-right: 8px; }
+            header { padding-left: 11px; padding-right: 11px; }
+            .stats { grid-template-columns: minmax(0, 1fr); }
+            .stats .stat:last-child { grid-column: auto; }
+            .stat { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+            .stat span { max-width: 70%; }
+            .stat strong { margin-top: 0; text-align: right; }
+            .panel { padding: 12px 9px !important; }
+            .menu-toggle { padding: 11px; gap: 9px; }
+            .current-tab { font-size: 12px; max-width: 55%; overflow-wrap: anywhere; }
+            .scroll table { min-width: 580px; }
+            input, select { padding: 10px; }
+        }
+        @media (min-width: 761px) {
+            .menu-toggle { display: none !important; }
+            .tab-links { display: flex !important; flex-direction: row; flex-wrap: wrap; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
+    
+/* MOBILE-FIRST: sistema pensado para uso exclusivo no celular */
+@media screen and (max-width:760px){
+ html,body{width:100%!important;min-width:0!important;max-width:100%!important;overflow-x:hidden!important;-webkit-text-size-adjust:100%}
+ header,main{width:100%!important;min-width:0!important;max-width:100%!important}
+ header{padding:16px 14px!important} header h1{font-size:clamp(17px,5vw,22px)!important;line-height:1.25;overflow-wrap:anywhere} header p{font-size:13px!important}
+ main{padding:0 10px!important;margin:12px auto 20px!important}
+ .panel{width:100%!important;min-width:0!important;max-width:100%!important;padding:14px 10px!important;overflow:hidden!important;border-radius:14px!important}
+ .panel>*,.toolbar,form,form>*,.stats,.stat{min-width:0!important;max-width:100%!important}
+ .stats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.stats .stat:last-child{grid-column:1/-1!important}
+ form{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}form .full{grid-column:1!important}
+ input,select,textarea,form button,.toolbar button,.toolbar input,.toolbar select{width:100%!important;min-width:0!important;max-width:100%!important;font-size:16px!important}
+ .toolbar{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important}.toolbar>*{width:100%!important;max-width:100%!important}
+ .tabs,.tab-links{width:100%!important;min-width:0!important}.menu-toggle{max-width:100%!important}
+ /* Cada linha de tabela passa a ser um cartão vertical, sem rolagem horizontal */
+ .scroll{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;overflow:visible!important}
+ .scroll table,.scroll tbody,.scroll tr,.scroll td{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important}
+ .scroll table{table-layout:fixed!important;white-space:normal!important;border-collapse:separate!important;border-spacing:0!important;overflow:visible!important}
+ .scroll thead{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+ .scroll tbody{display:grid!important;gap:10px!important}
+ .scroll tr{box-sizing:border-box!important;padding:5px 11px!important;margin:0!important;overflow:hidden!important;border:1px solid #353b36!important;border-radius:12px!important;background:#202120!important}
+ .scroll td{box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(0,40%) minmax(0,1fr)!important;gap:8px!important;align-items:start!important;padding:10px 0!important;border-bottom:1px solid #3b3b3b!important;font-size:14px!important;line-height:1.4!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+ .scroll td:before{content:attr(data-label)!important;min-width:0!important;color:#a4b4a8!important;font-size:12px!important;font-weight:700!important;overflow-wrap:anywhere!important}
+ .scroll td:last-child{border-bottom:0!important}.scroll td>*,.scroll td button,.scroll td select,.scroll td input{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important}
+ .actions{display:flex!important;flex-wrap:wrap!important;gap:6px!important}.actions button{flex:1 1 100%!important;min-width:0!important}
+ .tag{justify-self:start!important;white-space:normal!important}.current-tab{max-width:48%!important;overflow-wrap:anywhere!important}
+}
+@media screen and (max-width:380px){main{padding-left:7px!important;padding-right:7px!important}header{padding-left:10px!important;padding-right:10px!important}.panel{padding:11px 8px!important}.scroll tr{padding-left:8px!important;padding-right:8px!important}.scroll td{grid-template-columns:minmax(0,36%) minmax(0,1fr)!important;gap:6px!important}}
+
+
+        /* Ações de categoria alinhadas lado a lado no celular */
+        @media screen and (max-width: 760px) {
+            #categoryList td[data-label="Ação"] {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+            }
+            #categoryList td[data-label="Ação"]::before {
+                grid-column: 1 / -1 !important;
+            }
+            #categoryList td[data-label="Ação"] button {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                min-height: 48px !important;
+                margin: 0 !important;
+                padding: 10px 8px !important;
+                box-sizing: border-box !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+            }
+        }
+
+    
+        .inventory-subtabs { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px; }
+        .inventory-subtab { flex:1 1 0; min-width:0; }
+        .inventory-subtab.active { background:var(--green); color:#061109; border-color:var(--green); font-weight:700; }
+        .inventory-view { min-width:0; }
+        @media(max-width:760px) {
+          .inventory-subtabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+          .inventory-subtab { padding:10px 5px; font-size:13px; overflow-wrap:anywhere; }
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TUCUVORI | CONTROLE DE ESTOQUE</h1>
+        <p>Gestão de produtos, entradas, saídas e categorias</p>
+    </header>
+    <main>
+        <div id="notice" class="hidden"></div>
+        <section id="dashboard" class="panel">
+            <h2>Dashboard — Resumo do estoque</h2>
+            <div class="stats">
+            <div class="stat">
+                <span>Itens Cadastrados</span>
+                <strong id="count">0</strong>
+            </div>
+            <div class="stat">
+                <span>Itens com Estoque Baixo</span>
+                <strong id="low">0</strong>
+            </div>
+            <div class="stat">
+                <span>Movimentações Registradas</span>
+                <strong id="moves">0</strong>
+            </div>
+            </div>
+            <div id="dashboardAlerts"></div>
+        </section>
+        <nav class="tabs" aria-label="Menu principal">
+            <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="tabLinks">
+                <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span>Menu</span>
+                <span class="current-tab" id="currentTabLabel">Dashboard</span>
+            </button>
+            <div class="tab-links" id="tabLinks">
+                <button type="button" class="active" data-tab="dashboard">Dashboard</button>
+                <button type="button" data-tab="stock">Estoque atual</button>
+                <button type="button" data-tab="item">Cadastrar item</button>
+                <button type="button" data-tab="categoryTools">Categorias</button>
+                <button type="button" data-tab="move">Movimentações</button>
+                <button type="button" data-tab="history">Histórico</button>
+                <button type="button" data-tab="inventory">Inventário</button>
+                <button type="button" data-tab="reports">Relatórios</button>
+                <button type="button" data-tab="adminTools">Administração</button>
+            </div>
+        </nav>
+        
+        <section id="stock" class="panel hidden">
+            <div class="toolbar"><select id="stockCategoryFilter" aria-label="Filtrar por categoria"><option value="">Todas as categorias</option></select><select id="stockStatusFilter" aria-label="Filtrar por status"><option value="">Todos os status</option><option value="low">Estoque baixo</option><option value="zero">Estoque zerado</option><option value="ok">Estoque normal</option></select></div>
+            <div class="toolbar">
+                <h2>Estoque Atual</h2>
+                <input id="search" placeholder="Buscar por Nome, SKU ou Categoria...">
+            </div>
+            <div id="stockTable" class="scroll"></div>
+        </section>
+
+        <section id="item" class="panel hidden">
+            <h2>Cadastrar Novo Item</h2>
+            <form id="itemForm">
+                <label>SKU / Código *<input name="sku" required placeholder="..."></label>
+                <label>Nome do Item *<input name="name" required placeholder="..."></label>
+                <label>Categoria *
+                    <select name="category" id="itemCategory" required>
+                        <option value="">Selecione ou adicione uma categoria</option>
+                    </select>
+                </label>
+                <label>Unidade *<select name="unit"><option value="un">Unidade (Un)</option><option value="kg">Quilograma (Kg)</option><option value="m">Metro (M)</option><option value="L">Litro (L)</option><option value="cx">Caixa (Cx)</option><option value="pct">Pacote (Pct)</option><option value="rolo">Rolo</option></select></label>
+                <label>Quantidade Inicial<input name="qty" type="number" min="0" step="0.001" value="0" required></label>
+                <label>Estoque Mínimo (Alerta)<input name="min" type="number" min="0" step="0.001" value="0" required></label>
+                <button class="primary full">Salvar item</button>
+            </form>
+        </section>
+
+        <section id="move" class="panel hidden">
+            <h2>Registrar entrada ou saída</h2>
+            <form id="moveForm">
+                <label>Tipo *<select name="type"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></label>
+                <label>Item *<select name="item" id="moveItem" required></select></label>
+                <label>Quantidade *<input name="qty" type="number" min="0.001" step="0.001" required></label>
+                <label>Motivo *<select name="reason"><option>Compra</option><option>Devolução</option><option>Consumo interno</option><option>Perda/Avaria</option><option>Ajuste de Estoque</option><option>Outro</option></select></label>
+                <label>Quem Retirou? <input name="withdrawnBy" placeholder="Nome de quem retirou"></label>
+                <label class="full">Observação (Opcional)<input name="notes" placeholder="Nota Fiscal, Fornecedor ou Comentário"></label>
+                <button class="primary full">Registrar movimentação</button>
+            </form>
+        </section>
+
+        <section id="history" class="panel hidden">
+            <div class="toolbar">
+                <h2>Últimas movimentações</h2>
+                <button id="export" class="secondary">Baixar histórico CSV</button>
+            </div>
+            <div id="historyTable" class="scroll"></div>
+        </section>
+
+        <section id="inventory" class="panel hidden">
+            <h2>Inventário físico</h2>
+            <div class="inventory-subtabs" role="tablist" aria-label="Seções do inventário">
+                <button type="button" class="secondary inventory-subtab active" data-inventory-view="count">Contagem</button>
+                <button type="button" class="secondary inventory-subtab" data-inventory-view="history">Histórico</button>
+            </div>
+            <div id="inventoryCountView" class="inventory-view">
+            <p class="muted">Informe a quantidade encontrada. Diferenças serão registradas no histórico como ajuste de inventário.</p>
+            <form id="inventoryForm"><label class="full">Produto *<select id="inventoryItem" name="item" required></select></label><label>Quantidade contada *<input name="qty" type="number" min="0" step="0.001" required></label><label>Responsável<input name="responsible" placeholder="Quem realizou a contagem"></label><label class="full">Observação<input name="notes" placeholder="Observações da conferência"></label><button class="primary full">Registrar contagem</button></form>
+            </div>
+            <div id="inventoryHistoryView" class="inventory-view hidden">
+                <h3>Histórico de inventário</h3>
+                <p class="muted">Contagens que geraram ajuste de estoque aparecem aqui.</p>
+                <div class="toolbar">
+                    <button type="button" class="secondary" id="exportInventoryHistory">Exportar histórico CSV</button>
+                    <button type="button" class="secondary" id="pdfInventoryHistory">Exportar histórico PDF</button>
+                </div>
+                <div id="inventoryHistoryTable" class="scroll"></div>
+            </div>
+        </section>
+        <section id="reports" class="panel hidden"><h2>Relatórios e indicadores</h2><div id="reportsContent"></div><button id="exportStock" class="secondary" type="button">Exportar estoque CSV</button></section>
+
+        <section id="adminTools" class="panel hidden">
+            <h2>Administração</h2>
+            <p class="muted" style="font-size:13px">Ações protegidas por senha.</p>
+            <div class="toolbar">
+                <button id="exportFullSitePDF" class="secondary" type="button">Exportar PDF do site inteiro</button>
+                <button id="zeroStock" class="secondary" type="button">Zerar quantidades do estoque</button>
+                <button id="clearAll" class="primary" type="button" style="background:#b42318;color:#fff">Apagar todos os cadastros e histórico</button>
+            </div>
+        </section>
+
+        <section id="categoryTools" class="panel hidden">
+            <h2>Gerenciar categorias</h2>
+            <p class="muted" style="font-size:13px">Adicione aqui as categorias da Tucuvori. Elas ficarão salvas e disponíveis no cadastro de todos os próximos produtos.</p>
+            <form id="categoryForm">
+                <label class="full">Nome da nova categoria *<input name="categoryName" required maxlength="60" placeholder="Ex.: Matéria-prima"></label>
+                <button class="primary full" type="submit">+ Adicionar categoria</button>
+            </form>
+            <h3 style="margin-top:22px">Categorias cadastradas</h3>
+            <div id="categoryList" style="margin:14px 0 22px"></div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCGjD42273kmD67J5ry8DN_W3DjpnQOwU",
+            authDomain: "gestao-de-estoque-tucuvori.firebaseapp.com",
+            databaseURL: "https://gestao-de-estoque-tucuvori-default-rtdb.firebaseio.com",
+            projectId: "gestao-de-estoque-tucuvori",
+            storageBucket: "gestao-de-estoque-tucuvori.firebasestorage.app",
+            messagingSenderId: "342866757788",
+            appId: "1:342866757788:web:115da1a308b93af3008559"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const stockRef = database.ref('tucuvori/estoque');
+        const TAB_IDS = ['dashboard','stock','item','categoryTools','move','history','inventory','reports','adminTools'];
+        const EMPTY_DATA = () => ({ items: [], moves: [], categories: [] });
+        let data = EMPTY_DATA();
+        let firebaseLoaded = false;
+        let saveQueue = Promise.resolve();
+
+        const $ = s => document.querySelector(s);
+        const fmt = n => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(Number(n || 0));
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function normalizeData(source) {
+            const result = source && typeof source === 'object' ? source : EMPTY_DATA();
+            const asArray = value => Array.isArray(value) ? value : (value && typeof value === 'object' ? Object.values(value) : []);
+            const normalized = {
+                items: asArray(result.items),
+                moves: asArray(result.moves),
+                categories: asArray(result.categories)
+            };
+
+            normalized.items.forEach((item, idx) => {
+                if (!item.sku) item.sku = 'LEG-' + String(idx + 1).padStart(4, '0');
+                else item.sku = String(item.sku).toUpperCase();
+                if (!item.category) item.category = 'Sem categoria';
+            });
+
+            normalized.moves.forEach(move => {
+                const item = normalized.items.find(x => String(x.id) === String(move.itemId));
+                if (!move.sku) move.sku = (item?.sku || '').toUpperCase();
+                else move.sku = String(move.sku).toUpperCase();
+                if (!move.category) move.category = item?.category || 'Sem categoria';
+            });
+
+            return normalized;
+        }
+
+        function save() {
+            render();
+
+            // Aguarda a leitura inicial para não sobrescrever os dados da nuvem
+            // com o estado vazio de uma página recém-aberta.
+            if (!firebaseLoaded) {
+                note('Aguarde o carregamento do Firebase antes de salvar.', true);
+                return;
+            }
+
+            const snapshotToSave = JSON.parse(JSON.stringify(normalizeData(data)));
+            saveQueue = saveQueue
+                .catch(() => {})
+                .then(() => stockRef.set(snapshotToSave))
+                .catch(error => {
+                    console.error('Erro ao salvar no Firebase:', error);
+                    note('Não foi possível salvar no Firebase. Verifique as regras do banco e a conexão.', true);
+                });
+        }
+
+        // Atualização em tempo real: alterações feitas em outros dispositivos
+        // são recebidas pelo listener do Realtime Database.
+        stockRef.on('value', snapshot => {
+            data = normalizeData(snapshot.val() || EMPTY_DATA());
+            firebaseLoaded = true;
+            render();
+        }, error => {
+            firebaseLoaded = false;
+            console.error('Erro ao ler do Firebase:', error);
+            note('Não foi possível conectar ao Firebase. Verifique as regras do banco e a conexão.', true);
+        });
+
+        function note(t, err = false) {
+            const n = $('#notice');
+            n.textContent = t;
+            n.className = 'notice' + (err ? ' err' : '');
+            n.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => n.classList.add('hidden'), 4000);
+        }
+
+        function stock(i) {
+            return i.qty;
+        }
+
+        function render() {
+            const q = ($('#search')?.value || '').toLowerCase();
+            const catFilter = $('#stockCategoryFilter')?.value || '';
+            const statusFilter = $('#stockStatusFilter')?.value || '';
+            const list = data.items.filter(i => [i.name, i.sku, i.category].some(v => String(v || '').toLowerCase().includes(q)))
+                .filter(i => !catFilter || i.category === catFilter)
+                .filter(i => !statusFilter || (statusFilter === 'zero' ? Number(i.qty) === 0 : statusFilter === 'low' ? Number(i.qty) <= Number(i.min) : Number(i.qty) > Number(i.min)));
+            
+            $('#count').textContent = data.items.length;
+            $('#low').textContent = data.items.filter(i => Number(i.qty) <= Number(i.min)).length;
+            $('#moves').textContent = data.moves.length;
+            const zeroCount = data.items.filter(i => Number(i.qty) === 0).length;
+            $('#dashboardAlerts').innerHTML = `<p>${data.items.filter(i => Number(i.qty) <= Number(i.min)).length ? `<span class="tag low">${data.items.filter(i => Number(i.qty) <= Number(i.min)).length} produto(s) precisam de reposição</span>` : '<span class="tag">Nenhum alerta de estoque mínimo</span>'} ${zeroCount ? `<span class="tag low">${zeroCount} produto(s) zerados</span>` : ''}</p>`;
+            const filter = $('#stockCategoryFilter');
+            if (filter) { const old = filter.value; filter.innerHTML = '<option value="">Todas as categorias</option>' + [...data.categories].sort().map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join(''); filter.value = old; }
+            const inv = $('#inventoryItem'); if (inv) { const old = inv.value; inv.innerHTML = data.items.map(i => `<option value="${i.id}">${esc(i.sku)} — ${esc(i.name)} (${fmt(i.qty)} ${esc(i.unit)})</option>`).join(''); if (data.items.some(i => String(i.id) === old)) inv.value = old; }
+            const totalQty = data.items.reduce((sum,i) => sum + Number(i.qty || 0), 0);
+            $('#reportsContent').innerHTML = `<div class="stats"><div class="stat"><span>Produtos cadastrados</span><strong>${data.items.length}</strong></div><div class="stat"><span>Categorias</span><strong>${data.categories.length}</strong></div><div class="stat"><span>Quantidade total (soma das unidades)</span><strong>${fmt(totalQty)}</strong></div><div class="stat"><span>Entradas registradas</span><strong>${data.moves.filter(m => m.type === 'entrada').length}</strong></div><div class="stat"><span>Saídas registradas</span><strong>${data.moves.filter(m => m.type === 'saida').length}</strong></div><div class="stat"><span>Produtos zerados</span><strong>${zeroCount}</strong></div></div>`;
+
+            const categorySelect = $('#itemCategory');
+            if (categorySelect) {
+                const selectedCategory = categorySelect.value;
+                categorySelect.innerHTML = '<option value="">Selecione uma categoria</option>' + [...data.categories].sort((a,b) => a.localeCompare(b, 'pt-BR')).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+                if (data.categories.includes(selectedCategory)) categorySelect.value = selectedCategory;
+                categorySelect.disabled = data.categories.length === 0;
+            }
+            const categoryList = $('#categoryList');
+            if (categoryList) categoryList.innerHTML = data.categories.length
+                ? '<div class="scroll"><table><thead><tr><th>Categoria</th><th>Ação</th></tr></thead><tbody>' + [...data.categories].sort((a,b) => a.localeCompare(b, 'pt-BR')).map(c => `<tr><td data-label="Categoria">${esc(c)}</td><td data-label="Ação"><button class="secondary rename-category" type="button" data-category="${esc(c)}">Renomear</button> <button class="secondary remove-category" type="button" data-category="${esc(c)}">Excluir</button></td></tr>`).join('') + '</tbody></table></div>'
+                : '<div class="empty">Nenhuma categoria cadastrada ainda.</div>';
+
+            $('#stockTable').innerHTML = list.length ? 
+                `<table><thead><tr><th>Item</th><th>SKU</th><th>Categoria</th><th>Quantidade Atual</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(i => `<tr><td data-label="Item">${esc(i.name)}</td><td data-label="SKU">${esc((i.sku || "").toUpperCase())}</td><td data-label="Categoria">${esc(i.category || "Sem categoria")}</td><td data-label="Quantidade Atual"><b>${fmt(i.qty)} ${esc(i.unit)}</b></td><td data-label="Status"><span class="tag ${i.qty <= i.min ? 'low' : ''}">${i.qty <= i.min ? 'Repor' : 'Normal'}</span></td><td data-label="Ações"><button class="secondary edit-item" data-id="${esc(i.id)}" type="button">Editar</button></td></tr>`).join('')}</tbody></table>` : 
+                '<div class="empty">Nenhum item cadastrado. Use “Cadastrar item” para começar.</div>';
+
+            if (data.items.length) {
+                const grouped = {};
+                data.items.forEach(i => {
+                    const cat = i.category || 'Sem categoria';
+                    if (!grouped[cat]) grouped[cat] = [];
+                    grouped[cat].push(i);
+                });
+
+                let optionsHtml = '';
+                Object.keys(grouped).sort().forEach(cat => {
+                    optionsHtml += `<optgroup label="${esc(cat)}">`;
+                    grouped[cat].forEach(i => {
+                        optionsHtml += `<option value="${i.id}">${esc((i.sku || "").toUpperCase())} · ${esc(i.name)} — ${fmt(i.qty)} ${esc(i.unit)} restantes</option>`;
+                    });
+                    optionsHtml += `</optgroup>`;
+                });
+                $('#moveItem').innerHTML = optionsHtml;
+            } else {
+                $('#moveItem').innerHTML = '<option value="">Cadastre um insumo primeiro</option>';
+            }
+
+            $('#historyTable').innerHTML = data.moves.length ? 
+                `<table><thead><tr><th>Data</th><th>SKU</th><th>Item</th><th>Categoria</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Quem retirou</th><th>Observação</th></tr></thead><tbody>${[...data.moves].reverse().slice(0, 500).map(m => `<tr><td data-label="Data">${esc(m.date)}</td><td data-label="SKU">${esc((m.sku || "").toUpperCase())}</td><td data-label="Item">${esc(m.name)}</td><td data-label="Categoria">${esc(m.category || "Sem categoria")}</td><td data-label="Tipo"><span class="tag ${m.type === 'saida' ? 'low' : ''}">${m.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td><td data-label="Quantidade">${fmt(m.qty)} ${esc(m.unit)}</td><td data-label="Motivo">${esc(m.reason)}</td><td data-label="Quem retirou">${esc(m.withdrawnBy || "—")}</td><td data-label="Observação">${esc(m.notes || '—')}</td></tr>`).join('')}</tbody></table>` : 
+                '<div class="empty">Ainda não há movimentações.</div>';
+        }
+
+        const tabsMenu = $('.tabs');
+        const menuToggle = $('#menuToggle');
+        const currentTabLabel = $('#currentTabLabel');
+        menuToggle?.addEventListener('click', () => {
+            const opened = menuToggle.getAttribute('aria-expanded') !== 'true';
+            menuToggle.setAttribute('aria-expanded', String(opened));
+            tabsMenu.classList.toggle('menu-open', opened);
+        });
+        document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('active', x === b));
+            TAB_IDS.forEach(id => { if ($('#' + id)) $('#' + id).classList.toggle('hidden', id !== b.dataset.tab); });
+            if (currentTabLabel) currentTabLabel.textContent = b.textContent.trim();
+            menuToggle?.setAttribute('aria-expanded', 'false');
+            tabsMenu?.classList.remove('menu-open');
+            render();
+        }));
+
+        $('#categoryForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const input = new FormData(e.target).get('categoryName');
+            const category = String(input || '').trim().replace(/\s+/g, ' ');
+            if (!category) return note('Informe o nome da categoria.', true);
+            if (data.categories.some(c => c.toLocaleLowerCase('pt-BR') === category.toLocaleLowerCase('pt-BR'))) return note('Essa categoria já existe.', true);
+            data.categories.push(category);
+            save();
+            e.target.reset();
+            note('Categoria adicionada com sucesso.');
+        });
+
+        $('#categoryList').addEventListener('click', e => {
+            const renameButton = e.target.closest('.rename-category');
+            if (renameButton) { const oldName = renameButton.dataset.category; const newName = prompt('Novo nome da categoria:', oldName); if (newName === null) return; const clean = newName.trim().replace(/\s+/g, ' '); if (!clean) return note('Informe um nome válido.', true); if (data.categories.some(c => c.toLowerCase() === clean.toLowerCase() && c !== oldName)) return note('Essa categoria já existe.', true); data.categories = data.categories.map(c => c === oldName ? clean : c); data.items.forEach(i => { if (i.category === oldName) i.category = clean; }); save(); return note('Categoria renomeada.'); }
+            const button = e.target.closest('.remove-category');
+            if (!button) return;
+            const category = button.dataset.category;
+            if (data.items.some(item => item.category === category)) return note('Não é possível excluir: existem produtos usando essa categoria. Altere os produtos primeiro.', true);
+            if (!window.confirm(`Excluir a categoria "${category}"? O histórico existente será mantido.`)) return;
+            data.categories = data.categories.filter(c => c !== category);
+            save();
+            note('Categoria excluída.');
+        });
+
+        $('#itemForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const f = new FormData(e.target),
+                  sku = String(f.get('sku')).trim().toUpperCase(),
+                  name = String(f.get('name')).trim(),
+                  category = String(f.get('category')).trim(),
+                  unit = f.get('unit'),
+                  qty = Number(f.get('qty')),
+                  min = Number(f.get('min'));
+
+            if (!sku || !name || !category || !data.categories.includes(category) || qty < 0 || min < 0) return note('Confira os dados e selecione uma categoria cadastrada.', true);
+            if (data.items.some(i => String(i.sku || '').toUpperCase() === sku)) return note('Já existe um item com esse SKU.', true);
+            if (data.items.some(i => i.name.toLowerCase() === name.toLowerCase())) return note('Já existe um item com esse nome.', true);
+
+            data.items.push({ id: Date.now() + Math.random(), sku, name, category, unit, qty, min });
+            save();
+            e.target.reset();
+            note('Item cadastrado com sucesso.');
+            document.querySelector('[data-tab="stock"]').click();
+        });
+
+        $('#moveForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const f = new FormData(e.target),
+                  id = Number(f.get('item')),
+                  item = data.items.find(i => i.id === id),
+                  type = f.get('type'),
+                  qty = Number(f.get('qty')),
+                  withdrawnBy = String(f.get('withdrawnBy') || '').trim();
+
+            if (!item) return note('Cadastre um insumo primeiro.', true);
+            if (!(qty > 0)) return note('Informe uma quantidade maior que zero.', true);
+            if (type === 'saida' && !withdrawnBy) return note('Informe quem retirou o material.', true);
+            if (type === 'saida' && qty > item.qty) return note(`Saldo insuficiente. Disponível: ${fmt(item.qty)} ${item.unit}.`, true);
+
+            item.qty = Number((item.qty + (type === 'entrada' ? qty : -qty)).toFixed(3));
+            data.moves.push({
+                date: new Date().toLocaleString('pt-BR'),
+                itemId: item.id,
+                sku: (item.sku || '').toUpperCase(),
+                name: item.name,
+                category: item.category || 'Sem categoria',
+                unit: item.unit,
+                type,
+                qty,
+                reason: f.get('reason'),
+                withdrawnBy,
+                notes: String(f.get('notes') || '').trim()
+            });
+            save();
+            e.target.reset();
+            note('Movimentação registrada.');
+            document.querySelector('[data-tab="stock"]').click();
+        });
+
+        $('#search').addEventListener('input', render);
+        $('#stockCategoryFilter').addEventListener('change', render);
+        $('#stockStatusFilter').addEventListener('change', render);
+        $('#stockTable').addEventListener('click', e => {
+            const btn = e.target.closest('.edit-item'); if (!btn) return;
+            const item = data.items.find(i => String(i.id) === btn.dataset.id); if (!item) return;
+            const name = prompt('Nome do produto:', item.name); if (name === null) return;
+            const sku = prompt('SKU / Código:', item.sku); if (sku === null) return;
+            const qtyText = prompt('Quantidade atual:', item.qty); if (qtyText === null) return;
+            const minText = prompt('Estoque mínimo:', item.min); if (minText === null) return;
+            const category = prompt('Categoria (digite exatamente uma categoria cadastrada):\n' + data.categories.join(', '), item.category); if (category === null) return;
+            const qty = Number(qtyText), min = Number(minText), cleanSku = sku.trim().toUpperCase();
+            if (!name.trim() || !cleanSku || !data.categories.includes(category) || !Number.isFinite(qty) || qty < 0 || !Number.isFinite(min) || min < 0) return note('Dados inválidos. Confira nome, SKU, categoria e quantidades.', true);
+            if (data.items.some(x => x.id !== item.id && String(x.sku).toUpperCase() === cleanSku)) return note('Já existe outro produto com esse SKU.', true);
+            const before = Number(item.qty); Object.assign(item, {name:name.trim(), sku:cleanSku, qty, min, category});
+            if (before !== qty) data.moves.push({date:new Date().toLocaleString('pt-BR'), itemId:item.id, sku:item.sku, name:item.name, category:item.category, unit:item.unit, type:qty >= before ? 'entrada' : 'saida', qty:Math.abs(qty-before), reason:'Ajuste de estoque', withdrawnBy:'Edição de produto', notes:`Ajuste manual: ${fmt(before)} para ${fmt(qty)}`});
+            save(); note('Produto atualizado.');
+        });
+        $('#inventoryForm').addEventListener('submit', e => {
+            e.preventDefault(); const f = new FormData(e.target); const item = data.items.find(i => String(i.id) === String(f.get('item'))); if (!item) return note('Cadastre um produto primeiro.', true);
+            const counted = Number(f.get('qty')); if (!Number.isFinite(counted) || counted < 0) return note('Informe uma quantidade válida.', true);
+            const before = Number(item.qty || 0), diff = counted - before;
+            if (diff !== 0) { data.moves.push({date:new Date().toLocaleString('pt-BR'), itemId:item.id, sku:item.sku, name:item.name, category:item.category, unit:item.unit, type:diff > 0 ? 'entrada' : 'saida', qty:Math.abs(diff), reason:'Ajuste de Estoque', withdrawnBy:String(f.get('responsible') || 'Inventário'), notes:`Inventário físico: saldo anterior ${fmt(before)}, contado ${fmt(counted)}. ${String(f.get('notes') || '').trim()}`}); item.qty = counted; save(); note('Inventário registrado e diferença ajustada.'); } else note('Inventário registrado: nenhuma diferença encontrada.'); e.target.reset(); render();
+        });
+        $('#exportStock').addEventListener('click', () => { const rows=[['SKU','Produto','Categoria','Unidade','Quantidade','Estoque mínimo','Status'], ...data.items.map(i=>[i.sku,i.name,i.category,i.unit,i.qty,i.min,Number(i.qty)<=Number(i.min)?'Repor':'Normal'])]; const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n'); const a=document.createElement('a'); const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.href=url; a.download='estoque-tucuvori.csv'; a.click(); URL.revokeObjectURL(url); });
+
+        function confirmResetPassword() {
+            const p = window.prompt('Digite a senha para confirmar:');
+            if (p === null) return false;
+            if (p !== '1295') {
+                note('Senha incorreta. Ação cancelada.', true);
+                return false;
+            }
+            return true;
+        }
+
+        $('#zeroStock').addEventListener('click', () => {
+            if (!confirmResetPassword()) return;
+            if (!window.confirm('Confirma zerar as quantidades de todos os itens? Os cadastros e o histórico serão mantidos.')) return;
+            const now = new Date().toLocaleString('pt-BR');
+            data.items.forEach(i => {
+                const qty = Number(i.qty || 0);
+                if (qty > 0) {
+                    data.moves.push({
+                        date: now,
+                        itemId: i.id,
+                        sku: (i.sku || '').toUpperCase(),
+                        name: i.name,
+                        category: i.category || 'Sem categoria',
+                        unit: i.unit,
+                        type: 'saida',
+                        qty,
+                        reason: 'Ajuste de estoque',
+                        withdrawnBy: 'Administração',
+                        notes: 'Zeragem geral do estoque'
+                    });
+                }
+                i.qty = 0;
+            });
+            save();
+            note('Quantidades zeradas. Cadastros e histórico mantidos.');
+        });
+
+        $('#clearAll').addEventListener('click', () => {
+            if (!confirmResetPassword()) return;
+            if (!window.confirm('ATENÇÃO: todos os produtos e movimentações deste aparelho serão apagados. Esta ação não pode ser desfeita.')) return;
+            data = { items: [], moves: [], categories: [] };
+            save();
+            note('Todos os cadastros e o histórico deste aparelho foram apagados.');
+        });
+
+        $('#export').addEventListener('click', () => {
+            const rows = [
+                ['Data', 'SKU', 'Item', 'Categoria', 'Tipo', 'Quantidade', 'Unidade', 'Motivo', 'Quem retirou', 'Observação'],
+                ...data.moves.map(m => [m.date, (m.sku || '').toUpperCase(), m.name, m.category, m.type, m.qty, m.unit, m.reason, m.withdrawnBy, m.notes])
+            ];
+            const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n');
+            const a = document.createElement('a'),
+                  url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            a.href = url;
+            a.download = 'historico-estoque-tucuvori.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+
+        function inventoryMoves() {
+            return data.moves.filter(m => /inventário físico/i.test(String(m.notes || '')) || /inventário/i.test(String(m.reason || '')));
+        }
+        function renderInventoryHistory() {
+            const rows = inventoryMoves().slice().reverse();
+            const target = $('#inventoryHistoryTable');
+            if (!target) return;
+            target.innerHTML = rows.length ? `<table><thead><tr><th>Data</th><th>Produto</th><th>SKU</th><th>Tipo</th><th>Quantidade ajustada</th><th>Responsável</th><th>Observação</th></tr></thead><tbody>${rows.map(m=>`<tr><td data-label="Data">${esc(m.date||'—')}</td><td data-label="Produto">${esc(m.name||'—')}</td><td data-label="SKU">${esc(m.sku||'—')}</td><td data-label="Tipo">${esc(m.type||'—')}</td><td data-label="Quantidade ajustada">${fmt(m.qty)} ${esc(m.unit||'')}</td><td data-label="Responsável">${esc(m.withdrawnBy||'—')}</td><td data-label="Observação">${esc(m.notes||'—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Ainda não há ajustes de inventário registrados.</div>';
+        }
+        document.querySelectorAll('[data-inventory-view]').forEach(btn => btn.addEventListener('click', () => {
+            const view = btn.dataset.inventoryView;
+            document.querySelectorAll('[data-inventory-view]').forEach(b => b.classList.toggle('active', b === btn));
+            document.querySelectorAll('.inventory-view').forEach(el => el.classList.add('hidden'));
+            const selected = view === 'count' ? '#inventoryCountView' : '#inventoryHistoryView';
+            $(selected).classList.remove('hidden');
+            if (view === 'history') renderInventoryHistory();
+        }));
+        function downloadInventoryHistory() {
+            const rows = [['Data','Produto','SKU','Categoria','Tipo','Quantidade ajustada','Unidade','Responsável','Observação'], ...inventoryMoves().map(m=>[m.date,m.name,m.sku,m.category,m.type,m.qty,m.unit,m.withdrawnBy,m.notes])];
+            const csv='\\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\\r\\n');
+            const a=document.createElement('a'), url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+            a.href=url; a.download='historico-inventario-tucuvori.csv'; a.click(); URL.revokeObjectURL(url);
+        }
+        $('#exportInventoryHistory').addEventListener('click', downloadInventoryHistory);
+        $('#pdfInventoryHistory').addEventListener('click', () => {
+            renderInventoryHistory();
+            const content = $('#inventoryHistoryTable').innerHTML;
+            const w = window.open('', '_blank');
+            if (!w) { note('Permita pop-ups para gerar o PDF.', true); return; }
+            w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Histórico de Inventário - Tucuvori</title><style>body{font:14px Arial,sans-serif;padding:20px;color:#111}h1{font-size:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #bbb;padding:7px;text-align:left;overflow-wrap:anywhere}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>Tucuvori — Histórico de Inventário</h1>${content}<script>window.onload=()=>{window.print()}<\\/script></body></html>`);
+            w.document.close();
+        });
+
+        function escapePrint(value) {
+            return String(value ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+        function printableTable(headers, rows) {
+            return `<table><thead><tr>${headers.map(h=>`<th>${escapePrint(h)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(row=>`<tr>${row.map(v=>`<td>${escapePrint(v)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}">Nenhum registro encontrado.</td></tr>`}</tbody></table>`;
+        }
+        $('#exportFullSitePDF').addEventListener('click', () => {
+            const items = Array.isArray(data.items) ? data.items : [];
+            const moves = Array.isArray(data.moves) ? data.moves : [];
+            const categories = Array.isArray(data.categories) ? data.categories : [];
+            const invMoves = inventoryMoves();
+            const totalItems = items.length;
+            const totalQty = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+            const generatedAt = new Date().toLocaleString('pt-BR');
+            const content = `
+                <section><h2>Resumo geral</h2><div class="summary"><div><b>Produtos cadastrados</b><span>${totalItems}</span></div><div><b>Quantidade total em estoque</b><span>${escapePrint(fmt(totalQty))}</span></div><div><b>Categorias cadastradas</b><span>${categories.length}</span></div><div><b>Movimentações registradas</b><span>${moves.length}</span></div><div><b>Registros de inventário</b><span>${invMoves.length}</span></div></div></section>
+                <section><h2>Estoque atual</h2>${printableTable(['SKU','Produto','Categoria','Quantidade','Unidade','Status'], items.map(i=>[i.sku,i.name,i.category,fmt(i.qty),i.unit,i.status || ((Number(i.qty)||0)<=0?'Zerado':'Normal')]))}</section>
+                <section><h2>Categorias</h2>${printableTable(['Categoria'], categories.map(c=>[typeof c === 'string' ? c : (c.name || c.category || '—')]))}</section>
+                <section><h2>Histórico de movimentações</h2>${printableTable(['Data','SKU','Produto','Categoria','Tipo','Quantidade','Unidade','Motivo','Responsável','Observação'], moves.slice().reverse().map(m=>[m.date,m.sku,m.name,m.category,m.type,fmt(m.qty),m.unit,m.reason,m.withdrawnBy,m.notes]))}</section>
+                <section><h2>Histórico de inventário</h2>${printableTable(['Data','Produto','SKU','Tipo','Quantidade ajustada','Responsável','Observação'], invMoves.slice().reverse().map(m=>[m.date,m.name,m.sku,m.type,`${fmt(m.qty)} ${m.unit||''}`,m.withdrawnBy,m.notes]))}</section>`;
+            const w = window.open('', '_blank');
+            if (!w) { note('Permita pop-ups para gerar o PDF.', true); return; }
+            w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tucuvori — Relatório completo</title><style>
+                *{box-sizing:border-box}body{font:12px Arial,sans-serif;color:#171717;margin:0;padding:22px}h1{font-size:22px;margin:0 0 5px}h2{font-size:16px;margin:20px 0 8px;border-bottom:2px solid #20c875;padding-bottom:5px}p{color:#555;margin:0 0 16px}.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.summary div{border:1px solid #ccc;padding:10px;border-radius:6px}.summary b,.summary span{display:block}.summary span{font-size:18px;font-weight:bold;margin-top:5px}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #bbb;padding:5px;text-align:left;overflow-wrap:anywhere;vertical-align:top}th{background:#e8eee9}section{break-inside:auto;margin-bottom:18px}tr{break-inside:avoid}@media(max-width:600px){body{padding:12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}table{font-size:10px}th,td{padding:3px}}@media print{body{padding:0}h2{break-after:avoid}button{display:none}}
+                </style></head><body><h1>Tucuvori — Relatório completo do sistema</h1><p>Gerado em ${escapePrint(generatedAt)}. Inclui resumo, estoque atual, categorias, movimentações e histórico de inventário.</p>${content}<script>window.onload=()=>window.print()<\/script></body></html>`);
+            w.document.close();
+        });
+
+        render();
+    </script>
+</body>
+</html>
