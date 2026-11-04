@@ -431,7 +431,26 @@
             display: none !important;
         }
 
-        /* ESTILOS PARA O ACORDEÃO / LISTA EXPANSÍVEL DE CATEGORIAS */
+        .category-forms-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .category-form-box {
+            background: var(--surface-raised);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .category-form-box h3 {
+            font-size: 15px;
+            color: var(--green);
+            margin-bottom: 10px;
+        }
+
         .category-accordion-list {
             display: flex;
             flex-direction: column;
@@ -498,14 +517,6 @@
             font-size: 13px;
         }
 
-        .subcategory-box {
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 14px;
-            margin-top: 16px;
-            background: var(--surface-raised);
-        }
-
         .actions-inline {
             display: flex;
             gap: 6px;
@@ -558,6 +569,10 @@
             }
 
             form {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .category-forms-grid {
                 grid-template-columns: minmax(0, 1fr);
             }
 
@@ -653,7 +668,7 @@
         <div class="header-top">
             <div>
                 <div class="eyebrow">T.U.C.U.V.O.R.I.</div>
-                <h1>TUCUVORI | ESTOQUE</h1>
+                <h1>Estoque da Tucuvori</h1>
             </div>
             <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-label="Abrir menu de navegação">
                 <span>Menu</span>
@@ -667,8 +682,8 @@
         <nav class="tabs" aria-label="Navegação principal">
             <div class="tab-links" id="tabLinks">
                 <button type="button" class="active" data-tab="dashboard">Dashboard</button>
-                <button type="button" data-tab="stock">Estoque atual</button>
-                <button type="button" data-tab="item">Cadastrar item</button>
+                <button type="button" data-tab="stock">Estoque Atual</button>
+                <button type="button" data-tab="item">Cadastrar Item</button>
                 <button type="button" data-tab="categoryTools">Categorias</button>
                 <button type="button" data-tab="move">Movimentações</button>
                 <button type="button" data-tab="history">Histórico</button>
@@ -684,7 +699,7 @@
         <div id="notice" class="hidden"></div>
 
         <section id="dashboard" class="panel">
-            <h2>Dashboard — Resumo do estoque</h2>
+            <h2>Resumo de Estoque</h2>
             <div class="stats">
                 <div class="stat">
                     <span>Itens Cadastrados</span>
@@ -705,19 +720,19 @@
         <section id="stock" class="panel hidden">
             <h2>Estoque Atual</h2>
             <div class="toolbar">
-                <input id="search" placeholder="Buscar por nome, SKU, categoria...">
+                <input id="search" placeholder="Buscar por nome, categoria ou subcategoria...">
                 <div class="filter-group">
                     <select id="stockCategoryFilter" aria-label="Filtrar por Categoria">
-                        <option value="">Todas as categorias</option>
+                        <option value="">Todas as Categorias</option>
                     </select>
                     <select id="stockSubcategoryFilter" aria-label="Filtrar por Subcategoria" disabled>
-                        <option value="">Todas as subcategorias</option>
+                        <option value="">Todas as Subcategorias</option>
                     </select>
                     <select id="stockStatusFilter" aria-label="Filtrar por status">
-                        <option value="">Todos os status</option>
-                        <option value="low">Estoque baixo</option>
-                        <option value="zero">Estoque zerado</option>
-                        <option value="ok">Estoque normal</option>
+                        <option value="">Todos os Status</option>
+                        <option value="low">Estoque Baixo</option>
+                        <option value="zero">Estoque Zerado</option>
+                        <option value="ok">Estoque Normal</option>
                     </select>
                 </div>
             </div>
@@ -727,8 +742,7 @@
         <section id="item" class="panel hidden">
             <h2>Cadastrar Novo Item</h2>
             <form id="itemForm">
-                <label>SKU / Código *<input name="sku" required placeholder="Ex.: PRD-001"></label>
-                <label>Nome do Item *<input name="name" required placeholder="Ex.: Parafuso Galvalume"></label>
+                <label>Nome do Item *<input name="name" required placeholder="..."></label>
                 <label>Categoria *
                     <select name="category" id="itemCategory" required>
                         <option value="">Selecione uma categoria</option>
@@ -853,35 +867,40 @@
             </div>
         </section>
 
-        <!-- ABA DE GERENCIAR CATEGORIAS EM LISTA ACORDEÃO -->
         <section id="categoryTools" class="panel hidden">
-            <h2>Gerenciar categorias</h2>
-            <form id="categoryForm">
-                <label class="full">Nome da nova categoria *<input name="categoryName" required maxlength="60" placeholder="Ex.: Velas"></label>
-                <button class="primary full" type="submit">+ Adicionar categoria</button>
-            </form>
+            <h2>Gerenciar categorias e subcategorias</h2>
+            
+            <div class="category-forms-grid">
+                <div class="category-form-box">
+                    <h3>Cadastrar categoria</h3>
+                    <form id="categoryForm">
+                        <label class="full">Nome da categoria *<input name="categoryName" required maxlength="60" placeholder="Ex.: Velas"></label>
+                        <button class="primary full" type="submit" style="margin-top: 8px;">+ Adicionar categoria</button>
+                    </form>
+                </div>
 
-            <div style="margin-top: 20px;">
+                <div class="category-form-box">
+                    <h3>Cadastrar subcategoria</h3>
+                    <form id="subcategoryForm">
+                        <label class="full">Categoria principal *
+                            <select id="subcategoryParent" name="parent" required>
+                                <option value="">Selecione uma categoria</option>
+                            </select>
+                        </label>
+                        <label class="full">Nome da subcategoria *
+                            <input name="subcategoryName" required maxlength="60" placeholder="Ex.: Aromáticas">
+                        </label>
+                        <button class="primary full" type="submit" style="margin-top: 8px;">+ Adicionar subcategoria</button>
+                    </form>
+                </div>
+            </div>
+
+            <div>
                 <div class="toolbar" style="margin-bottom:10px;">
                     <h3 style="font-size:15px; color:var(--green);">Categorias cadastradas</h3>
                     <input id="categorySearchInput" placeholder="Pesquisar categoria..." style="max-width: 100%;">
                 </div>
                 <div id="categoryAccordionList" class="category-accordion-list"></div>
-            </div>
-
-            <div class="subcategory-box">
-                <h3 style="font-size:15px; margin-bottom:8px; color:var(--green);">Cadastrar subcategoria</h3>
-                <form id="subcategoryForm">
-                    <label>Categoria principal *
-                        <select id="subcategoryParent" name="parent" required>
-                            <option value="">Selecione uma categoria</option>
-                        </select>
-                    </label>
-                    <label>Nome da subcategoria *
-                        <input name="subcategoryName" required maxlength="60" placeholder="Ex.: Aromáticas">
-                    </label>
-                    <button class="primary full" type="submit">+ Adicionar subcategoria</button>
-                </form>
             </div>
         </section>
     </main>
@@ -963,17 +982,16 @@
                 purchaseOrders: asArray(result.purchaseOrders)
             };
 
+            normalized.categories.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            normalized.subcategories.sort((a, b) => a.category.localeCompare(b.category, 'pt-BR') || a.name.localeCompare(b.name, 'pt-BR'));
+
             normalized.items.forEach((item, idx) => {
-                if (!item.sku) item.sku = 'LEG-' + String(idx + 1).padStart(4, '0');
-                else item.sku = String(item.sku).toUpperCase();
                 if (!item.category) item.category = 'Sem categoria';
                 if (!item.subcategory) item.subcategory = '';
             });
 
             normalized.moves.forEach(move => {
                 const item = normalized.items.find(x => String(x.id) === String(move.itemId));
-                if (!move.sku) move.sku = (item?.sku || '').toUpperCase();
-                else move.sku = String(move.sku).toUpperCase();
                 if (!move.category) move.category = item?.category || 'Sem categoria';
             });
 
@@ -1037,7 +1055,7 @@
             const subCatFilter = $('#stockSubcategoryFilter')?.value || '';
             const statusFilter = $('#stockStatusFilter')?.value || '';
 
-            const list = data.items.filter(i => [i.name, i.sku, i.category, i.subcategory].some(v => String(v || '').toLowerCase().includes(q)))
+            const list = data.items.filter(i => [i.name, i.category, i.subcategory].some(v => String(v || '').toLowerCase().includes(q)))
                 .filter(i => !catFilter || i.category === catFilter)
                 .filter(i => !subCatFilter || i.subcategory === subCatFilter)
                 .filter(i => !statusFilter || (statusFilter === 'zero' ? Number(i.qty) === 0 : statusFilter === 'low' ? Number(i.qty) <= Number(i.min) : Number(i.qty) > Number(i.min)));
@@ -1051,7 +1069,7 @@
             const filter = $('#stockCategoryFilter');
             if (filter) { 
                 const old = filter.value; 
-                filter.innerHTML = '<option value="">Todas as categorias</option>' + [...data.categories].sort().map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join(''); 
+                filter.innerHTML = '<option value="">Todas as categorias</option>' + [...data.categories].sort((a,b) => a.localeCompare(b, 'pt-BR')).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join(''); 
                 filter.value = old; 
             }
             updateSubcategoryFilters();
@@ -1059,14 +1077,14 @@
             const inv = $('#inventoryItem'); 
             if (inv) { 
                 const old = inv.value; 
-                inv.innerHTML = data.items.map(i => `<option value="${i.id}">${esc(i.sku)} — ${esc(i.name)} (${fmt(i.qty)} ${esc(i.unit)})</option>`).join(''); 
+                inv.innerHTML = data.items.map(i => `<option value="${i.id}">${esc(i.name)} (${fmt(i.qty)} ${esc(i.unit)})</option>`).join(''); 
                 if (data.items.some(i => String(i.id) === old)) inv.value = old; 
             }
 
             const poItemSelect = $('#poItem');
             if (poItemSelect) {
                 const oldPo = poItemSelect.value;
-                poItemSelect.innerHTML = '<option value="">Selecione um item</option>' + data.items.map(i => `<option value="${i.id}">${esc(i.sku)} — ${esc(i.name)} (${esc(i.category)}${i.subcategory ? ' / ' + esc(i.subcategory) : ''})</option>`).join('');
+                poItemSelect.innerHTML = '<option value="">Selecione um item</option>' + data.items.map(i => `<option value="${i.id}">${esc(i.name)} (${esc(i.category)}${i.subcategory ? ' / ' + esc(i.subcategory) : ''})</option>`).join('');
                 if (data.items.some(i => String(i.id) === oldPo)) poItemSelect.value = oldPo;
             }
 
@@ -1094,7 +1112,6 @@
                 if (choices.includes(selectedSubcategory)) subcategorySelect.value = selectedSubcategory;
             }
 
-            // RENDERIZAÇÃO DA LISTA EXPANSÍVEL (ACORDEÃO) DE CATEGORIAS
             const categorySearchQuery = ($('#categorySearchInput')?.value || '').toLowerCase();
             const accordionContainer = $('#categoryAccordionList');
             if (accordionContainer) {
@@ -1121,7 +1138,7 @@
                                     <button class="secondary rename-category" type="button" data-category="${esc(c)}" style="flex:1;">Renomear Categoria</button>
                                     <button class="secondary remove-category" type="button" data-category="${esc(c)}" style="flex:1; color:var(--red); border-color:var(--line);">Excluir Categoria</button>
                                 </div>
-                                <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">Subcategorias vinculadas:</div>
+                                <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">Subcategorias vinculadas (A-Z):</div>
                                 ${subs.length ? subs.map(s => `
                                     <div class="sub-list-item">
                                         <span>• ${esc(s.name)}</span>
@@ -1138,7 +1155,7 @@
             }
 
             $('#stockTable').innerHTML = list.length ? 
-                `<table><thead><tr><th>Item</th><th>SKU</th><th>Categoria</th><th>Subcategoria</th><th>Quantidade</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(i => `<tr><td data-label="Item"><b>${esc(i.name)}</b></td><td data-label="SKU">${esc((i.sku || "").toUpperCase())}</td><td data-label="Categoria">${esc(i.category || "—")}</td><td data-label="Subcategoria">${esc(i.subcategory || "—")}</td><td data-label="Quantidade"><b>${fmt(i.qty)} ${esc(i.unit)}</b></td><td data-label="Status"><span class="tag ${i.qty <= i.min ? 'low' : ''}">${i.qty <= i.min ? 'Repor' : 'OK'}</span></td><td data-label="Ações"><button class="secondary edit-item" data-id="${esc(i.id)}" type="button">Editar</button></td></tr>`).join('')}</tbody></table>` : 
+                `<table><thead><tr><th>Item</th><th>Categoria</th><th>Subcategoria</th><th>Quantidade</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(i => `<tr><td data-label="Item"><b>${esc(i.name)}</b></td><td data-label="Categoria">${esc(i.category || "—")}</td><td data-label="Subcategoria">${esc(i.subcategory || "—")}</td><td data-label="Quantidade"><b>${fmt(i.qty)} ${esc(i.unit)}</b></td><td data-label="Status"><span class="tag ${i.qty <= i.min ? 'low' : ''}">${i.qty <= i.min ? 'Repor' : 'OK'}</span></td><td data-label="Ações"><button class="secondary edit-item" data-id="${esc(i.id)}" type="button">Editar</button></td></tr>`).join('')}</tbody></table>` : 
                 '<div class="empty">Nenhum item localizado para a categoria/filtro selecionado.</div>';
 
             if (data.items.length) {
@@ -1153,7 +1170,7 @@
                 Object.keys(grouped).sort().forEach(cat => {
                     optionsHtml += `<optgroup label="${esc(cat)}">`;
                     grouped[cat].forEach(i => {
-                        optionsHtml += `<option value="${i.id}">${esc((i.sku || "").toUpperCase())} · ${esc(i.name)} (${fmt(i.qty)} ${esc(i.unit)})</option>`;
+                        optionsHtml += `<option value="${i.id}">${esc(i.name)} (${fmt(i.qty)} ${esc(i.unit)})</option>`;
                     });
                     optionsHtml += `</optgroup>`;
                 });
@@ -1163,7 +1180,7 @@
             }
 
             $('#historyTable').innerHTML = data.moves.length ? 
-                `<table><thead><tr><th>Data</th><th>SKU</th><th>Item</th><th>Tipo</th><th>Qtd</th><th>Motivo</th><th>Responsável</th></tr></thead><tbody>${[...data.moves].reverse().slice(0, 300).map(m => `<tr><td data-label="Data">${esc(m.date)}</td><td data-label="SKU">${esc((m.sku || "").toUpperCase())}</td><td data-label="Item">${esc(m.name)}</td><td data-label="Tipo"><span class="tag ${m.type === 'saida' ? 'low' : ''}">${m.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td><td data-label="Quantidade">${fmt(m.qty)} ${esc(m.unit)}</td><td data-label="Motivo">${esc(m.reason)}</td><td data-label="Responsável">${esc(m.withdrawnBy || "—")}</td></tr>`).join('')}</tbody></table>` : 
+                `<table><thead><tr><th>Data</th><th>Item</th><th>Tipo</th><th>Qtd</th><th>Motivo</th><th>Responsável</th></tr></thead><tbody>${[...data.moves].reverse().slice(0, 300).map(m => `<tr><td data-label="Data">${esc(m.date)}</td><td data-label="Item">${esc(m.name)}</td><td data-label="Tipo"><span class="tag ${m.type === 'saida' ? 'low' : ''}">${m.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td><td data-label="Quantidade">${fmt(m.qty)} ${esc(m.unit)}</td><td data-label="Motivo">${esc(m.reason)}</td><td data-label="Responsável">${esc(m.withdrawnBy || "—")}</td></tr>`).join('')}</tbody></table>` : 
                 '<div class="empty">Nenhuma movimentação.</div>';
 
             const poTable = $('#poListTable');
@@ -1171,7 +1188,7 @@
                 const pos = [...(data.purchaseOrders || [])].reverse();
                 poTable.innerHTML = pos.length ? 
                     `<table><thead><tr><th>Item</th><th>Categoria</th><th>Subcategoria</th><th>Precisa de quanto</th><th>Data do Pedido</th><th>Ações</th></tr></thead><tbody>${pos.map(p => `<tr>
-                        <td data-label="Item"><b>${esc(p.itemName)}</b><br><small class="muted">${esc(p.sku)}</small></td>
+                        <td data-label="Item"><b>${esc(p.itemName)}</b></td>
                         <td data-label="Categoria">${esc(p.category)}</td>
                         <td data-label="Subcategoria">${esc(p.subcategory || '—')}</td>
                         <td data-label="Precisa de quanto"><b>${fmt(p.qty)} ${esc(p.unit)}</b></td>
@@ -1221,7 +1238,6 @@
                 orderDate: new Date(orderDateRaw + 'T00:00:00').toLocaleDateString('pt-BR'),
                 itemId: item.id,
                 itemName: item.name,
-                sku: item.sku,
                 category: item.category || 'Sem categoria',
                 subcategory: item.subcategory || '—',
                 unit: item.unit,
@@ -1260,11 +1276,10 @@
                     </div>
                     <table>
                         <thead>
-                            <tr><th>SKU</th><th>Item / Produto</th><th>Precisa de quanto</th><th>Unidade</th></tr>
+                            <tr><th>Item / Produto</th><th>Precisa de quanto</th><th>Unidade</th></tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>${esc(po.sku)}</td>
                                 <td>${esc(po.itemName)}</td>
                                 <td><b>${fmt(po.qty)}</b></td>
                                 <td>${esc(po.unit)}</td>
@@ -1285,7 +1300,7 @@
                             `*Data do Pedido:* ${po.orderDate}\n` +
                             `*Categoria:* ${po.category}\n` +
                             `*Subcategoria:* ${po.subcategory}\n` +
-                            `*Item:* ${po.itemName} (SKU: ${po.sku})\n` +
+                            `*Item:* ${po.itemName}\n` +
                             `*Precisa de quanto:* ${fmt(po.qty)} ${po.unit}\n\n` +
                             `Por favor, confirmar disponibilidade e valores.`;
                 
@@ -1301,6 +1316,7 @@
             if (!category) return note('Informe o nome da categoria.', true);
             if (data.categories.some(c => c.toLocaleLowerCase('pt-BR') === category.toLocaleLowerCase('pt-BR'))) return note('Essa categoria já existe.', true);
             data.categories.push(category);
+            data.categories.sort((a,b) => a.localeCompare(b, 'pt-BR'));
             save();
             e.target.reset();
             note('Categoria adicionada com sucesso.');
@@ -1316,7 +1332,9 @@
                 if (!clean) return note('Nome inválido.', true); 
                 if (data.categories.some(c => c.toLowerCase() === clean.toLowerCase() && c !== oldName)) return note('Categoria já existente.', true); 
                 data.categories = data.categories.map(c => c === oldName ? clean : c); 
+                data.categories.sort((a,b) => a.localeCompare(b, 'pt-BR'));
                 data.subcategories.forEach(s => { if (s.category === oldName) s.category = clean; }); 
+                data.subcategories.sort((a,b) => a.category.localeCompare(b, 'pt-BR') || a.name.localeCompare(b, 'pt-BR'));
                 data.items.forEach(i => { if (i.category === oldName) i.category = clean; }); 
                 data.moves.forEach(m => { if (m.category === oldName) m.category = clean; }); 
                 save(); 
@@ -1344,6 +1362,7 @@
                 if (!name) return note('Nome inválido.', true);
                 if (data.subcategories.some(s => s.category === category && s.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR') && s.name !== oldName)) return note('Subcategoria já existente.', true);
                 data.subcategories.forEach(s => { if (s.category === category && s.name === oldName) s.name = name; });
+                data.subcategories.sort((a,b) => a.category.localeCompare(b, 'pt-BR') || a.name.localeCompare(b, 'pt-BR'));
                 data.items.forEach(i => { if (i.category === category && i.subcategory === oldName) i.subcategory = name; });
                 save();
                 note('Subcategoria renomeada.');
@@ -1371,6 +1390,7 @@
             if (!name) return note('Informe o nome da subcategoria.', true);
             if (data.subcategories.some(s => s.category.toLocaleLowerCase('pt-BR') === category.toLocaleLowerCase('pt-BR') && s.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) return note('Subcategoria já existe.', true);
             data.subcategories.push({ category, name });
+            data.subcategories.sort((a,b) => a.category.localeCompare(b, 'pt-BR') || a.name.localeCompare(b, 'pt-BR'));
             save();
             e.target.elements.subcategoryName.value = '';
             note('Subcategoria adicionada.');
@@ -1379,7 +1399,6 @@
         $('#itemForm').addEventListener('submit', e => {
             e.preventDefault();
             const f = new FormData(e.target),
-                  sku = String(f.get('sku')).trim().toUpperCase(),
                   name = String(f.get('name')).trim(),
                   category = String(f.get('category')).trim(),
                   subcategory = String(f.get('subcategory') || '').trim(),
@@ -1387,10 +1406,9 @@
                   qty = Number(f.get('qty')),
                   min = Number(f.get('min'));
 
-            if (!sku || !name || !category || !data.categories.includes(category) || qty < 0 || min < 0) return note('Preencha os campos obrigatórios corretamente.', true);
-            if (data.items.some(i => String(i.sku || '').toUpperCase() === sku)) return note('Já existe um item com esse SKU.', true);
+            if (!name || !category || !data.categories.includes(category) || qty < 0 || min < 0) return note('Preencha os campos obrigatórios corretamente.', true);
 
-            data.items.push({ id: Date.now() + Math.random(), sku, name, category, subcategory, unit, qty, min });
+            data.items.push({ id: Date.now() + Math.random(), name, category, subcategory, unit, qty, min });
             save();
             e.target.reset();
             note('Item cadastrado!');
@@ -1415,7 +1433,6 @@
             data.moves.push({
                 date: new Date().toLocaleString('pt-BR'),
                 itemId: item.id,
-                sku: (item.sku || '').toUpperCase(),
                 name: item.name,
                 category: item.category || 'Sem categoria',
                 subcategory: item.subcategory || '',
@@ -1445,21 +1462,19 @@
             const btn = e.target.closest('.edit-item'); if (!btn) return;
             const item = data.items.find(i => String(i.id) === btn.dataset.id); if (!item) return;
             const name = prompt('Nome do produto:', item.name); if (name === null) return;
-            const sku = prompt('SKU / Código:', item.sku); if (sku === null) return;
             const qtyText = prompt('Quantidade atual:', item.qty); if (qtyText === null) return;
             const minText = prompt('Estoque mínimo:', item.min); if (minText === null) return;
             
-            const qty = Number(qtyText), min = Number(minText), cleanSku = sku.trim().toUpperCase();
-            if (!name.trim() || !cleanSku || !Number.isFinite(qty) || qty < 0 || !Number.isFinite(min) || min < 0) return note('Valores inválidos informados.', true);
+            const qty = Number(qtyText), min = Number(minText);
+            if (!name.trim() || !Number.isFinite(qty) || qty < 0 || !Number.isFinite(min) || min < 0) return note('Valores inválidos informados.', true);
             
             const before = Number(item.qty); 
-            Object.assign(item, {name: name.trim(), sku: cleanSku, qty, min});
+            Object.assign(item, {name: name.trim(), qty, min});
             
             if (before !== qty) {
                 data.moves.push({
                     date: new Date().toLocaleString('pt-BR'),
                     itemId: item.id,
-                    sku: item.sku,
                     name: item.name,
                     category: item.category,
                     subcategory: item.subcategory || '',
@@ -1489,7 +1504,6 @@
                 data.moves.push({
                     date: new Date().toLocaleString('pt-BR'), 
                     itemId: item.id, 
-                    sku: item.sku, 
                     name: item.name, 
                     category: item.category, 
                     subcategory: item.subcategory || '', 
@@ -1511,7 +1525,7 @@
         });
 
         $('#exportStock').addEventListener('click', () => { 
-            const rows=[['SKU','Produto','Categoria','Subcategoria','Unidade','Quantidade','Estoque mínimo','Status'], ...data.items.map(i=>[i.sku,i.name,i.category,i.subcategory || '',i.unit,i.qty,i.min,Number(i.qty)<=Number(i.min)?'Repor':'OK'])]; 
+            const rows=[['Produto','Categoria','Subcategoria','Unidade','Quantidade','Estoque mínimo','Status'], ...data.items.map(i=>[i.name,i.category,i.subcategory || '',i.unit,i.qty,i.min,Number(i.qty)<=Number(i.min)?'Repor':'OK'])]; 
             const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n'); 
             const a=document.createElement('a'); 
             const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); 
@@ -1536,7 +1550,7 @@
                 const qty = Number(i.qty || 0);
                 if (qty > 0) {
                     data.moves.push({
-                        date: now, itemId: i.id, sku: i.sku, name: i.name, category: i.category, unit: i.unit, type: 'saida', qty, reason: 'Ajuste de estoque', withdrawnBy: 'Administração', notes: 'Zeragem geral de estoque'
+                        date: now, itemId: i.id, name: i.name, category: i.category, unit: i.unit, type: 'saida', qty, reason: 'Ajuste de estoque', withdrawnBy: 'Administração', notes: 'Zeragem geral de estoque'
                     });
                 }
                 i.qty = 0;
@@ -1570,8 +1584,8 @@
 
         $('#export').addEventListener('click', () => {
             const rows = [
-                ['Data', 'SKU', 'Item', 'Categoria', 'Subcategoria', 'Tipo', 'Quantidade', 'Unidade', 'Motivo', 'Quem retirou', 'Observação'],
-                ...data.moves.map(m => [m.date, m.sku, m.name, m.category, m.subcategory || '', m.type, m.qty, m.unit, m.reason, m.withdrawnBy, m.notes])
+                ['Data', 'Item', 'Categoria', 'Subcategoria', 'Tipo', 'Quantidade', 'Unidade', 'Motivo', 'Quem retirou', 'Observação'],
+                ...data.moves.map(m => [m.date, m.name, m.category, m.subcategory || '', m.type, m.qty, m.unit, m.reason, m.withdrawnBy, m.notes])
             ];
             const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n');
             const a = document.createElement('a'), url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -1586,7 +1600,7 @@
             const rows = inventoryMoves().slice().reverse();
             const target = $('#inventoryHistoryTable');
             if (!target) return;
-            target.innerHTML = rows.length ? `<table><thead><tr><th>Data</th><th>Produto</th><th>SKU</th><th>Tipo</th><th>Qtd Ajustada</th><th>Responsável</th></tr></thead><tbody>${rows.map(m=>`<tr><td data-label="Data">${esc(m.date||'—')}</td><td data-label="Produto">${esc(m.name||'—')}</td><td data-label="SKU">${esc(m.sku||'—')}</td><td data-label="Tipo">${esc(m.type||'—')}</td><td data-label="Qtd Ajustada">${fmt(m.qty)} ${esc(m.unit||'')}</td><td data-label="Responsável">${esc(m.withdrawnBy||'—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Sem histórico de inventário.</div>';
+            target.innerHTML = rows.length ? `<table><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd Ajustada</th><th>Responsável</th></tr></thead><tbody>${rows.map(m=>`<tr><td data-label="Data">${esc(m.date||'—')}</td><td data-label="Produto">${esc(m.name||'—')}</td><td data-label="Tipo">${esc(m.type||'—')}</td><td data-label="Qtd Ajustada">${fmt(m.qty)} ${esc(m.unit||'')}</td><td data-label="Responsável">${esc(m.withdrawnBy||'—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Sem histórico de inventário.</div>';
         }
 
         document.querySelectorAll('[data-inventory-view]').forEach(btn => btn.addEventListener('click', () => {
@@ -1599,7 +1613,7 @@
         }));
 
         $('#exportInventoryHistory').addEventListener('click', () => {
-            const rows = [['Data','Produto','SKU','Categoria','Tipo','Quantidade','Unidade','Responsável','Observação'], ...inventoryMoves().map(m=>[m.date,m.name,m.sku,m.category,m.type,m.qty,m.unit,m.withdrawnBy,m.notes])];
+            const rows = [['Data','Produto','Categoria','Tipo','Quantidade','Unidade','Responsável','Observação'], ...inventoryMoves().map(m=>[m.date,m.name,m.category,m.type,m.qty,m.unit,m.withdrawnBy,m.notes])];
             const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
             const a=document.createElement('a'), url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
             a.href=url; a.download='historico-inventario-tucuvori.csv'; a.click(); URL.revokeObjectURL(url);
@@ -1620,7 +1634,7 @@
             const generatedAt = new Date().toLocaleString('pt-BR');
             const w = window.open('', '_blank');
             if (!w) return note('Permita pop-ups para gerar PDF.', true);
-            w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório Completo - Tucuvori</title><style>body{font:11px Arial,sans-serif;padding:15px}h1{font-size:18px}h2{font-size:14px;border-bottom:1px solid #285c4d;padding-bottom:3px;margin-top:15px}table{width:100%;border-collapse:collapse;margin-top:5px}th,td{border:1px solid #ccc;padding:4px;text-align:left}th{background:#f0f5f1}</style></head><body><h1>Tucuvori — Relatório de Estoque</h1><p>Emmitido em: ${generatedAt}</p><h2>Estoque Atual (${items.length} itens)</h2><table><thead><tr><th>SKU</th><th>Produto</th><th>Categoria</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${items.map(i=>`<tr><td>${esc(i.sku)}</td><td>${esc(i.name)}</td><td>${esc(i.category)}</td><td>${fmt(i.qty)} ${esc(i.unit)}</td><td>${Number(i.qty)<=Number(i.min)?'Repor':'OK'}</td></tr>`).join('')}</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>`);
+            w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório Completo - Tucuvori</title><style>body{font:11px Arial,sans-serif;padding:15px}h1{font-size:18px}h2{font-size:14px;border-bottom:1px solid #285c4d;padding-bottom:3px;margin-top:15px}table{width:100%;border-collapse:collapse;margin-top:5px}th,td{border:1px solid #ccc;padding:4px;text-align:left}th{background:#f0f5f1}</style></head><body><h1>Tucuvori — Relatório de Estoque</h1><p>Emmitido em: ${generatedAt}</p><h2>Estoque Atual (${items.length} itens)</h2><table><thead><tr><th>Produto</th><th>Categoria</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${items.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.category)}</td><td>${fmt(i.qty)} ${esc(i.unit)}</td><td>${Number(i.qty)<=Number(i.min)?'Repor':'OK'}</td></tr>`).join('')}</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>`);
             w.document.close();
         });
 
